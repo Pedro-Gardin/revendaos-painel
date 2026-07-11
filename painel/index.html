@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AutoPrime — Painel</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <!-- Firebase Auth -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-text">AUTO<span>PRIME</span></span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group-label">ESTOQUE</div>
+    <a class="nav-item active" onclick="showPane('estoque')" id="nav-estoque">
+      <i class="ti ti-car"></i><span>Meu Estoque</span>
+    </a>
+    <a class="nav-item" onclick="showPane('adicionar')" id="nav-adicionar">
+      <i class="ti ti-circle-plus"></i><span>Adicionar Carro</span>
+    </a>
+    <a class="nav-item" onclick="showPane('custos')" id="nav-custos">
+      <i class="ti ti-tool"></i><span>Custo por Veículo</span>
+    </a>
+
+    <div class="nav-group-label">FINANCEIRO</div>
+    <a class="nav-item" onclick="showPane('financeiro')" id="nav-financeiro">
+      <i class="ti ti-cash"></i><span>Financeiro</span>
+    </a>
+    <a class="nav-item" onclick="showPane('metas')" id="nav-metas">
+      <i class="ti ti-target"></i><span>Metas e Comissões</span>
+    </a>
+
+    <div class="nav-group-label">RELACIONAMENTO</div>
+    <a class="nav-item" onclick="showPane('crm')" id="nav-crm">
+      <i class="ti ti-users"></i><span>CRM — Clientes</span>
+    </a>
+
+    <div class="nav-group-label">RELATÓRIOS</div>
+    <a class="nav-item" href="relatorio.html" id="nav-relatorio">
+      <i class="ti ti-file-analytics"></i><span>Relatório Mensal</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <!-- Email do usuário logado -->
+    <div class="usuario-info">
+      <i class="ti ti-user-circle" style="font-size:18px;color:var(--sb-text)"></i>
+      <span id="usuario-email" style="font-size:12px;color:var(--sb-text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Carregando...</span>
+    </div>
+    <!-- Status Firebase -->
+    <div class="sidebar-status" id="sidebar-status">
+      <i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i>
+      <span>Conectando...</span>
+    </div>
+    <!-- Botão Sair -->
+    <button onclick="sair()" class="btn-sair">
+      <i class="ti ti-logout"></i><span>Sair</span>
+    </button>
+  </div>
+</aside>
+
+<!-- CONTEÚDO PRINCIPAL -->
+<main class="main-content">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1 class="page-title" id="page-title">Meu Estoque</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-date" id="topbar-date"></div>
+    </div>
+  </div>
+
+  <!-- ===== PANE: ESTOQUE ===== -->
+  <div class="pane" id="pane-estoque">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4"><i class="ti ti-car" style="color:#16a34a"></i></div><div><div class="stat-label">Total estoque</div><div class="stat-val" id="cnt-total">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#eff6ff"><i class="ti ti-check" style="color:#2563eb"></i></div><div><div class="stat-label">Disponíveis</div><div class="stat-val" id="cnt-disp">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fffbeb"><i class="ti ti-clock" style="color:#d97706"></i></div><div><div class="stat-label">Reservados</div><div class="stat-val" id="cnt-res">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fef2f2"><i class="ti ti-flag" style="color:#dc2626"></i></div><div><div class="stat-label">Vendidos</div><div class="stat-val" id="cnt-vend">—</div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="ti ti-list"></i> Veículos cadastrados</div>
+        <button class="btn-primary-sm" onclick="showPane('adicionar')"><i class="ti ti-plus"></i> Novo carro</button>
+      </div>
+      <div id="car-list"><div class="loading-state"><i class="ti ti-loader-2"></i><p>Carregando...</p></div></div>
+    </div>
+  </div>
+
+  <!-- ===== PANE: ADICIONAR CARRO ===== -->
+  <div class="pane hidden" id="pane-adicionar">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-camera"></i> Fotos do veículo</div></div>
+      <div class="foto-area" onclick="document.getElementById('file-input').click()">
+        <i class="ti ti-cloud-upload"></i>
+        <p><strong>Clique para adicionar fotos</strong><br><span>Selecione várias fotos de uma vez</span></p>
+      </div>
+      <input type="file" id="file-input" multiple accept="image/*"/>
+      <div class="fotos-preview" id="fotos-preview"></div>
+    </div>
+    <div class="form-grid">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-info-circle"></i> Informações</div></div>
+        <div class="row2">
+          <div class="field"><label>Marca</label><input type="text" id="f-marca" placeholder="Volkswagen"/></div>
+          <div class="field"><label>Modelo</label><input type="text" id="f-modelo" placeholder="Gol 1.6"/></div>
+        </div>
+        <div class="row3">
+          <div class="field"><label>Ano</label><input type="number" id="f-ano" placeholder="2021"/></div>
+          <div class="field"><label>Km rodados</label><input type="text" id="f-km" placeholder="42.000"/></div>
+          <div class="field"><label>Cor</label><input type="text" id="f-cor" placeholder="Prata"/></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Combustível</label>
+            <select id="f-comb"><option>Flex</option><option>Gasolina</option><option>Diesel</option><option>Elétrico</option><option>Híbrido</option></select>
+          </div>
+          <div class="field"><label>Câmbio</label>
+            <select id="f-cambio"><option>Manual</option><option>Automático</option><option>Automatizado</option><option>CVT</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Descrição</label>
+          <textarea id="f-desc-car" placeholder="Destaque os pontos positivos do veículo..."></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-tag"></i> Preço e situação</div></div>
+        <div class="field"><label>Preço de venda</label><input type="text" id="f-preco" placeholder="R$ 58.900" oninput="fmtCampo(this)"/></div>
+        <div class="field"><label>Custo de aquisição <span class="hint">(quanto pagou no carro)</span></label><input type="text" id="f-custo" placeholder="R$ 45.000" oninput="fmtCampo(this)"/></div>
+        <div class="field"><label>Aceita troca?</label>
+          <select id="f-troca"><option value="nao">Não aceita</option><option value="sim">Aceita troca</option><option value="mais">Aceita com volta</option></select>
+        </div>
+        <div class="field"><label>Situação</label>
+          <div class="status-row">
+            <input class="status-opt" type="radio" name="status" id="st-d" value="disponivel" checked/><label for="st-d"><i class="ti ti-check"></i> Disponível</label>
+            <input class="status-opt" type="radio" name="status" id="st-r" value="reservado"/><label for="st-r"><i class="ti ti-clock"></i> Reservado</label>
+            <input class="status-opt" type="radio" name="status" id="st-v" value="vendido"/><label for="st-v"><i class="ti ti-x"></i> Vendido</label>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="limparCarro()">Limpar</button>
+          <button class="btn-primary" onclick="salvarCarro()"><i class="ti ti-device-floppy"></i> Salvar veículo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PANE: CUSTO POR VEÍCULO ===== -->
+  <div class="pane hidden" id="pane-custos">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4"><i class="ti ti-receipt" style="color:#16a34a"></i></div><div><div class="stat-label">Total investido</div><div class="stat-val" id="custo-total">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#eff6ff"><i class="ti ti-trending-up" style="color:#2563eb"></i></div><div><div class="stat-label">Margem média</div><div class="stat-val" id="custo-margem">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fef2f2"><i class="ti ti-tool" style="color:#dc2626"></i></div><div><div class="stat-label">Carros com custos</div><div class="stat-val" id="custo-qtd">—</div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-tool"></i> Gastos por veículo</div></div>
+      <div id="custos-lista"><div class="loading-state"><i class="ti ti-loader-2"></i><p>Carregando...</p></div></div>
+    </div>
+    <div class="card" id="custo-form-card" style="display:none">
+      <div class="card-header">
+        <div class="card-title"><i class="ti ti-plus"></i> <span id="custo-form-titulo">Adicionar gasto</span></div>
+        <button class="btn-ghost-sm" onclick="fecharCustoForm()">Cancelar</button>
+      </div>
+      <div class="row3">
+        <div class="field"><label>Tipo de gasto</label>
+          <select id="custo-tipo">
+            <option>Funilaria / Pintura</option><option>Mecânica</option><option>Documentação</option>
+            <option>Limpeza / Detailing</option><option>Pneus</option><option>Elétrica</option><option>Outros</option>
+          </select>
+        </div>
+        <div class="field"><label>Descrição</label><input type="text" id="custo-desc" placeholder="Ex: Troca de pneus dianteiros"/></div>
+        <div class="field"><label>Valor</label><input type="text" id="custo-val" placeholder="R$ 0" oninput="fmtCampo(this)"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="salvarGasto()"><i class="ti ti-check"></i> Adicionar gasto</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PANE: FINANCEIRO ===== -->
+  <div class="pane hidden" id="pane-financeiro">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4"><i class="ti ti-arrow-up" style="color:#16a34a"></i></div><div><div class="stat-label">Receitas do mês</div><div class="stat-val green" id="fin-rec">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fef2f2"><i class="ti ti-arrow-down" style="color:#dc2626"></i></div><div><div class="stat-label">Despesas do mês</div><div class="stat-val red" id="fin-des">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#eff6ff"><i class="ti ti-scale" style="color:#2563eb"></i></div><div><div class="stat-label">Saldo líquido</div><div class="stat-val" id="fin-sal">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fffbeb"><i class="ti ti-percentage" style="color:#d97706"></i></div><div><div class="stat-label">Margem</div><div class="stat-val yellow" id="fin-mar">—</div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="ti ti-plus-circle"></i> Novo lançamento</div>
+        <div class="tipo-toggle">
+          <button class="tipo-btn trec active" id="btn-rec" onclick="setTipo('receita')"><i class="ti ti-arrow-up"></i> Receita</button>
+          <button class="tipo-btn tdes" id="btn-des" onclick="setTipo('despesa')"><i class="ti ti-arrow-down"></i> Despesa</button>
+        </div>
+      </div>
+      <div class="row3">
+        <div class="field" style="grid-column:1/3"><label>Descrição</label><input type="text" id="fin-desc" placeholder="Ex: Venda Gol 2021..."/></div>
+        <div class="field"><label>Valor</label><input type="text" id="fin-val" placeholder="R$ 0" oninput="fmtCampo(this)"/></div>
+      </div>
+      <div class="row3">
+        <div class="field"><label>Categoria</label><select id="fin-cat"></select></div>
+        <div class="field"><label>Data</label><input type="date" id="fin-data"/></div>
+        <div class="field"><label class="label-invisible">.</label><button class="btn-primary" style="width:100%;justify-content:center" onclick="adicionarLanc()"><i class="ti ti-check"></i> Adicionar</button></div>
+      </div>
+    </div>
+    <div class="two-col-grid">
+      <div class="card"><div class="card-title" style="margin-bottom:14px"><i class="ti ti-chart-bar"></i> Despesas por categoria</div><div id="fin-barras"></div></div>
+      <div class="card"><div class="card-title" style="margin-bottom:14px"><i class="ti ti-scale"></i> Resumo do período</div><div id="fin-resumo-detalhe"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="ti ti-list"></i> Extrato</div>
+        <select id="fin-mes" onchange="renderFinanceiro()" class="select-input"></select>
+      </div>
+      <div id="fin-lista"></div>
+    </div>
+  </div>
+
+  <!-- ===== PANE: METAS E COMISSÕES ===== -->
+  <div class="pane hidden" id="pane-metas">
+    <div class="two-col-grid">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-target"></i> Meta do mês</div></div>
+        <div class="field"><label>Meta de faturamento (R$)</label><input type="text" id="meta-valor" placeholder="R$ 50.000" oninput="fmtCampo(this)"/></div>
+        <div class="field"><label>Meta de vendas (unidades)</label><input type="number" id="meta-unidades" placeholder="10"/></div>
+        <div class="field"><label>Mês de referência</label><input type="month" id="meta-mes"/></div>
+        <button class="btn-primary" onclick="salvarMeta()"><i class="ti ti-device-floppy"></i> Salvar meta</button>
+        <div class="meta-progress" id="meta-progress" style="margin-top:20px"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-user-plus"></i> Cadastrar vendedor</div></div>
+        <div class="field"><label>Nome do vendedor</label><input type="text" id="vend-nome" placeholder="Ex: João Silva"/></div>
+        <div class="field"><label>% de comissão por venda</label><input type="number" id="vend-comissao" placeholder="2.5" step="0.1"/></div>
+        <button class="btn-primary" onclick="salvarVendedor()"><i class="ti ti-plus"></i> Adicionar vendedor</button>
+        <div id="vendedores-lista" style="margin-top:16px"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-trophy"></i> Comissões do mês</div></div>
+      <div class="field" style="max-width:300px">
+        <label>Lançar venda</label>
+        <div class="row2">
+          <select id="vend-sel" class="select-input"></select>
+          <input type="text" id="vend-val-venda" placeholder="R$ valor" oninput="fmtCampo(this)"/>
+        </div>
+      </div>
+      <button class="btn-primary-sm" onclick="lancarComissao()" style="margin-bottom:16px"><i class="ti ti-plus"></i> Lançar comissão</button>
+      <div id="comissoes-lista"></div>
+    </div>
+  </div>
+
+  <!-- ===== PANE: CRM ===== -->
+  <div class="pane hidden" id="pane-crm">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-icon" style="background:#eff6ff"><i class="ti ti-users" style="color:#2563eb"></i></div><div><div class="stat-label">Total leads</div><div class="stat-val" id="crm-total">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fffbeb"><i class="ti ti-phone" style="color:#d97706"></i></div><div><div class="stat-label">Em contato</div><div class="stat-val" id="crm-contato">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4"><i class="ti ti-check" style="color:#16a34a"></i></div><div><div class="stat-label">Fechados</div><div class="stat-val" id="crm-fechados">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fef2f2"><i class="ti ti-x" style="color:#dc2626"></i></div><div><div class="stat-label">Perdidos</div><div class="stat-val" id="crm-perdidos">—</div></div></div>
+    </div>
+    <div class="two-col-grid">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-user-plus"></i> Novo lead</div></div>
+        <div class="row2">
+          <div class="field"><label>Nome</label><input type="text" id="crm-nome" placeholder="Nome do cliente"/></div>
+          <div class="field"><label>WhatsApp</label><input type="text" id="crm-wpp" placeholder="(54) 9xxxx-xxxx"/></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Interesse</label><input type="text" id="crm-interesse" placeholder="Ex: SUV até R$ 80k"/></div>
+          <div class="field"><label>Origem</label>
+            <select id="crm-origem"><option>WhatsApp</option><option>Instagram</option><option>Site</option><option>Indicação</option><option>Presencial</option><option>OLX</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Observação</label><textarea id="crm-obs" placeholder="Anotações sobre o cliente..." style="min-height:60px"></textarea></div>
+        <button class="btn-primary" onclick="salvarLead()"><i class="ti ti-plus"></i> Adicionar lead</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-filter"></i> Filtrar por status</div></div>
+        <div class="crm-filtros">
+          <button class="crm-filtro active" data-status="todos">Todos</button>
+          <button class="crm-filtro" data-status="novo">Novo</button>
+          <button class="crm-filtro" data-status="contato">Em contato</button>
+          <button class="crm-filtro" data-status="negociando">Negociando</button>
+          <button class="crm-filtro" data-status="fechado">Fechado</button>
+          <button class="crm-filtro" data-status="perdido">Perdido</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-list"></i> Pipeline de clientes</div></div>
+      <div id="crm-lista"><div class="loading-state"><i class="ti ti-loader-2"></i><p>Carregando...</p></div></div>
+    </div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check" id="toast-icon"></i><span id="toast-msg">Salvo!</span></div>
+
+<script src="auth-guard.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

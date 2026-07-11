@@ -1,0 +1,218 @@
+// =============================================
+//  SITE PÚBLICO v2 — AutoPrime
+//  app.js — Firebase + carrossel de fotos
+// =============================================
+
+// ─── FIREBASE ────────────────────────────────
+const firebaseConfig = {
+  apiKey:            "AIzaSyDzJP-XF37RCedf_wN7svLg1YZ82u3ULF8",
+  authDomain:        "painelrevenda-2bc8b.firebaseapp.com",
+  projectId:         "painelrevenda-2bc8b",
+  storageBucket:     "painelrevenda-2bc8b.firebasestorage.app",
+  messagingSenderId: "57821691298",
+  appId:             "1:57821691298:web:04198c179330458a3ac6fb"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ─── ESTADO ──────────────────────────────────
+const EMOJIS = { Volkswagen:'🚗',Fiat:'🚙',Toyota:'🚘',Chevrolet:'🚗',Hyundai:'🚗',Jeep:'🚙',Honda:'🚗',Renault:'🚗',Ford:'🚗',Nissan:'🚗',Mitsubishi:'🚙',Kia:'🚗' };
+
+let todosCarros  = [];
+let filtroAtivo  = 'todos';
+let carroAtivo   = null;
+let fotoAtiva    = 0;
+
+function getEmoji(m) { return EMOJIS[m] || '🚗'; }
+
+// ─── NAVBAR SCROLL ───────────────────────────
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// ─── LISTENER FIREBASE ───────────────────────
+db.collection('carros').orderBy('criadoEm', 'desc').onSnapshot(snap => {
+  todosCarros = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderGrid();
+}, err => {
+  document.getElementById('car-grid').innerHTML = `
+    <div class="estoque-vazio">
+      <i class="ti ti-wifi-off"></i>
+      <p>Não foi possível carregar o estoque.</p>
+    </div>`;
+});
+
+// ─── FILTROS ─────────────────────────────────
+document.getElementById('filtros').addEventListener('click', e => {
+  const btn = e.target.closest('.filtro');
+  if (!btn) return;
+  document.querySelectorAll('.filtro').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filtroAtivo = btn.dataset.filtro;
+  renderGrid();
+});
+
+// ─── RENDER GRID ─────────────────────────────
+function renderGrid() {
+  const grid = document.getElementById('car-grid');
+
+  let lista = todosCarros.filter(c => c.status !== 'vendido');
+  if (filtroAtivo !== 'todos') lista = lista.filter(c => c.status === filtroAtivo);
+
+  if (!lista.length) {
+    grid.innerHTML = `<div class="estoque-vazio"><i class="ti ti-car-off"></i><p>Nenhum veículo encontrado.</p></div>`;
+    document.getElementById('estoque-cta').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('estoque-cta').style.display = 'block';
+
+  const statusLabel = { disponivel:'Disponível', reservado:'Reservado' };
+
+  grid.innerHTML = lista.map(c => {
+    const temFoto  = c.fotos && c.fotos.length > 0;
+    const fotoSrc  = temFoto ? c.fotos[0] : null;
+    const qtdFotos = c.fotos ? c.fotos.length : 0;
+
+    return `
+      <div class="car-card" onclick="abrirModal('${c.id}')">
+        <div class="car-card-foto">
+          ${fotoSrc
+            ? `<img src="${fotoSrc}" alt="${c.marca} ${c.modelo}" loading="lazy"/>`
+            : getEmoji(c.marca)}
+          <div class="car-card-badge badge-${c.status}">${statusLabel[c.status] || ''}</div>
+          ${qtdFotos > 1 ? `<div class="car-card-fotos-count"><i class="ti ti-camera"></i> ${qtdFotos}</div>` : ''}
+        </div>
+        <div class="car-card-body">
+          <div class="car-card-marca">${c.marca} · ${c.ano}</div>
+          <div class="car-card-modelo">${c.modelo}</div>
+          <div class="car-card-specs">
+            <div class="spec"><i class="ti ti-road"></i>${c.km} km</div>
+            <div class="spec"><i class="ti ti-settings"></i>${c.cambio}</div>
+            <div class="spec"><i class="ti ti-droplet"></i>${c.comb}</div>
+            ${c.troca !== 'nao' ? `<div class="spec"><i class="ti ti-arrows-exchange"></i>Aceita troca</div>` : ''}
+          </div>
+          <hr class="car-card-divider"/>
+          <div class="car-card-preco-row">
+            <div class="car-card-preco">${c.preco}</div>
+            <button class="car-card-btn"><i class="ti ti-eye"></i> Ver detalhes</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ─── MODAL E CARROSSEL ───────────────────────
+function abrirModal(id) {
+  const c = todosCarros.find(x => x.id === id);
+  if (!c) return;
+  carroAtivo = c;
+  fotoAtiva  = 0;
+
+  renderGaleria();
+  renderInfoModal(c);
+
+  document.getElementById('modal-overlay').classList.add('aberto');
+  document.body.style.overflow = 'hidden';
+}
+
+function renderGaleria() {
+  const c      = carroAtivo;
+  const fotos  = c.fotos && c.fotos.length ? c.fotos : [];
+  const temFoto = fotos.length > 0;
+
+  // Foto principal
+  const mgMain = document.getElementById('mg-main');
+  if (temFoto) {
+    mgMain.innerHTML = `<img src="${fotos[fotoAtiva]}" alt="${c.marca} ${c.modelo}"/>`;
+  } else {
+    mgMain.innerHTML = getEmoji(c.marca);
+  }
+
+  // Contador
+  document.getElementById('mg-counter').textContent = temFoto
+    ? `${fotoAtiva + 1} / ${fotos.length}` : '';
+  document.getElementById('mg-counter').style.display = temFoto ? 'block' : 'none';
+
+  // Setas
+  const prev = document.getElementById('mg-prev');
+  const next = document.getElementById('mg-next');
+  if (!temFoto || fotos.length <= 1) {
+    prev.classList.add('hidden');
+    next.classList.add('hidden');
+  } else {
+    prev.classList.toggle('hidden', fotoAtiva === 0);
+    next.classList.toggle('hidden', fotoAtiva === fotos.length - 1);
+  }
+
+  // Thumbnails
+  const thumbs = document.getElementById('mg-thumbs');
+  if (!temFoto || fotos.length <= 1) {
+    thumbs.style.display = 'none';
+  } else {
+    thumbs.style.display = 'flex';
+    thumbs.innerHTML = fotos.map((f, i) => `
+      <img
+        src="${f}"
+        class="mg-thumb ${i === fotoAtiva ? 'active' : ''}"
+        onclick="irParaFoto(${i})"
+        alt="Foto ${i+1}"
+      />`).join('');
+  }
+}
+
+function mudarFoto(dir) {
+  const fotos = carroAtivo?.fotos || [];
+  fotoAtiva = Math.max(0, Math.min(fotos.length - 1, fotoAtiva + dir));
+  renderGaleria();
+}
+
+function irParaFoto(i) {
+  fotoAtiva = i;
+  renderGaleria();
+}
+
+// Teclado (setas) no modal
+document.addEventListener('keydown', e => {
+  if (!carroAtivo) return;
+  if (e.key === 'ArrowLeft')  mudarFoto(-1);
+  if (e.key === 'ArrowRight') mudarFoto(1);
+  if (e.key === 'Escape')     fecharModal(null, true);
+});
+
+function renderInfoModal(c) {
+  const troca = { sim:'✓ Aceita troca', mais:'✓ Aceita com volta', nao:'' }[c.troca] || '';
+  const status = { disponivel:'🟢 Disponível', reservado:'🟡 Reservado' }[c.status] || '';
+
+  const msgWpp = encodeURIComponent(
+    `Olá! Vi o site e tenho interesse no ${c.marca} ${c.modelo} ${c.ano} (${c.preco}). Ainda disponível?`
+  );
+
+  document.getElementById('modal-info').innerHTML = `
+    <div class="mi-left">
+      <div class="mi-marca">${c.marca} · ${c.ano} · ${status}</div>
+      <div class="mi-modelo">${c.modelo}</div>
+      <div class="mi-specs">
+        <div class="mi-spec"><span class="mi-spec-label">Quilometragem</span><span class="mi-spec-val">${c.km} km</span></div>
+        <div class="mi-spec"><span class="mi-spec-label">Câmbio</span><span class="mi-spec-val">${c.cambio}</span></div>
+        <div class="mi-spec"><span class="mi-spec-label">Combustível</span><span class="mi-spec-val">${c.comb}</span></div>
+        <div class="mi-spec"><span class="mi-spec-label">Cor</span><span class="mi-spec-val">${c.cor}</span></div>
+        ${troca ? `<div class="mi-spec"><span class="mi-spec-label">Troca</span><span class="mi-spec-val">${troca}</span></div>` : ''}
+      </div>
+      ${c.desc ? `<p class="mi-desc">${c.desc}</p>` : ''}
+    </div>
+    <div class="mi-right">
+      <div class="mi-preco">${c.preco}</div>
+      <a class="btn-wpp-modal" href="https://wa.me/5554999999999?text=${msgWpp}" target="_blank">
+        <i class="ti ti-brand-whatsapp"></i> Tenho interesse
+      </a>
+    </div>`;
+}
+
+function fecharModal(event, forcar) {
+  if (!forcar && event && event.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('aberto');
+  document.body.style.overflow = '';
+  carroAtivo = null;
+}

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Relatório Mensal — AutoPrime</title>
+  <link rel="stylesheet" href="relatorio.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- CONTROLES (não aparecem na impressão) -->
+  <div class="controles no-print">
+    <div class="controles-esq">
+      <a href="index.html" class="btn-voltar">
+        <i class="ti ti-arrow-left"></i> Voltar ao painel
+      </a>
+      <div class="ctrl-mes">
+        <i class="ti ti-calendar"></i>
+        <select id="sel-mes" onchange="renderRelatorio()"></select>
+      </div>
+    </div>
+    <button class="btn-imprimir" onclick="window.print()">
+      <i class="ti ti-printer"></i> Imprimir / Salvar PDF
+    </button>
+  </div>
+
+  <!-- RELATÓRIO (este bloco é impresso) -->
+  <div class="relatorio" id="relatorio">
+
+    <!-- Cabeçalho -->
+    <div class="rel-header">
+      <div>
+        <div class="rel-logo">AUTO<span>PRIME</span></div>
+        <div class="rel-subtitulo">Relatório Financeiro Mensal</div>
+      </div>
+      <div class="rel-info">
+        <div class="rel-periodo" id="rel-periodo">—</div>
+        <div>Gerado em: <span id="rel-hoje"></span></div>
+        <div>Garibaldi — RS</div>
+      </div>
+    </div>
+
+    <!-- Cards de resumo -->
+    <div class="rel-cards">
+      <div class="rel-card">
+        <div class="rel-card-label">Receita total</div>
+        <div class="rel-card-val green" id="r-rec">—</div>
+      </div>
+      <div class="rel-card">
+        <div class="rel-card-label">Despesas total</div>
+        <div class="rel-card-val red" id="r-des">—</div>
+      </div>
+      <div class="rel-card">
+        <div class="rel-card-label">Lucro líquido</div>
+        <div class="rel-card-val" id="r-luc">—</div>
+      </div>
+      <div class="rel-card" style="border-right:none">
+        <div class="rel-card-label">Margem de lucro</div>
+        <div class="rel-card-val yellow" id="r-mar">—</div>
+      </div>
+    </div>
+
+    <div class="rel-body">
+
+      <!-- Veículos vendidos -->
+      <div class="rel-section">
+        <div class="rel-section-title">
+          <i class="ti ti-car no-print-icon"></i> Veículos vendidos no período
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Veículo</th>
+              <th>Ano</th>
+              <th>Cor</th>
+              <th class="td-r">Valor de venda</th>
+            </tr>
+          </thead>
+          <tbody id="tab-vendas"></tbody>
+        </table>
+      </div>
+
+      <!-- Receitas -->
+      <div class="rel-section">
+        <div class="rel-section-title">
+          <i class="ti ti-arrow-up no-print-icon" style="color:#16A34A"></i> Receitas
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Categoria</th>
+              <th>Descrição</th>
+              <th class="td-r">Data</th>
+              <th class="td-r">Valor</th>
+            </tr>
+          </thead>
+          <tbody id="tab-rec"></tbody>
+          <tfoot>
+            <tr class="tfoot-row">
+              <td colspan="3"><strong>Total de receitas</strong></td>
+              <td class="td-r green"><strong id="tot-rec">—</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Despesas -->
+      <div class="rel-section">
+        <div class="rel-section-title">
+          <i class="ti ti-arrow-down no-print-icon" style="color:#DC2626"></i> Despesas
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Categoria</th>
+              <th>Descrição</th>
+              <th class="td-r">Data</th>
+              <th class="td-r">Valor</th>
+            </tr>
+          </thead>
+          <tbody id="tab-des"></tbody>
+          <tfoot>
+            <tr class="tfoot-row">
+              <td colspan="3"><strong>Total de despesas</strong></td>
+              <td class="td-r red"><strong id="tot-des">—</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Resultado final -->
+      <div class="rel-resultado" id="rel-resultado">
+        <div class="resultado-item">
+          <div class="resultado-label">Resultado do período</div>
+          <div class="resultado-val" id="resultado-val">—</div>
+        </div>
+        <div class="resultado-item resultado-item-right">
+          <div class="resultado-label">Margem de lucro</div>
+          <div class="resultado-val" id="resultado-mar">—</div>
+        </div>
+      </div>
+
+      <!-- Assinatura -->
+      <div class="rel-assinatura">
+        <div class="assinatura-campo">
+          <div class="assinatura-linha"></div>
+          <div class="assinatura-label">Responsável</div>
+        </div>
+        <div class="assinatura-campo">
+          <div class="assinatura-linha"></div>
+          <div class="assinatura-label">Data</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Rodapé -->
+    <div class="rel-footer">
+      <div>AutoPrime Veículos · Garibaldi-RS · (54) 9xxxx-xxxx · autoprime.com.br</div>
+      <div id="footer-data"></div>
+    </div>
+
+  </div>
+
+  <script src="relatorio.js"></script>
+</body>
+</html>
