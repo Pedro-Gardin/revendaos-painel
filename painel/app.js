@@ -1,6 +1,6 @@
 // =============================================
 //  PAINEL AUTOPRIME v2
-//  app.js — todos os módulos + Firebase
+//  app.js — com upload de fotos via Cloudinary
 // =============================================
 
 // ─── FIREBASE CONFIG ─────────────────────────
@@ -25,6 +25,27 @@ const colVendedores = db.collection('vendedores');
 const colComissoes  = db.collection('comissoes');
 const colCRM        = db.collection('crm');
 
+// ─── CLOUDINARY CONFIG ───────────────────────
+const CLOUDINARY_CLOUD = 'x2xybz4b';
+const CLOUDINARY_PRESET = 'autoprime_upload'; // Unsigned preset (criamos abaixo)
+
+// Faz upload de uma foto pro Cloudinary e retorna a URL permanente
+async function uploadFoto(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_PRESET);
+  formData.append('folder', 'autoprime');
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`,
+    { method: 'POST', body: formData }
+  );
+
+  if (!res.ok) throw new Error('Erro no upload da foto');
+  const data = await res.json();
+  return data.secure_url; // URL permanente na nuvem
+}
+
 // ─── CONSTANTES ──────────────────────────────
 const EMOJIS = { Volkswagen:'🚗',Fiat:'🚙',Toyota:'🚘',Chevrolet:'🚗',Hyundai:'🚗',Jeep:'🚙',Honda:'🚗',Renault:'🚗',Ford:'🚗',Nissan:'🚗',Mitsubishi:'🚙',Kia:'🚗' };
 const CATS_RECEITA = ['Venda de veículo','Entrada / Sinal','Financiamento','Serviço / Revisão','Outro'];
@@ -43,7 +64,8 @@ let gastos      = [];
 let vendedores  = [];
 let comissoes   = [];
 let leads       = [];
-let fotoUrls    = [];
+let fotosParaUpload = []; // arquivos File aguardando upload
+let fotoUrls    = []; // previews locais
 let tipoAtivo   = 'receita';
 let custoCarroAtivo = null;
 let crmFiltro   = 'todos';
@@ -60,6 +82,8 @@ function fmtCampo(el) {
 }
 
 function parseMoeda(s) { return parseInt((s||'0').replace(/\D/g,''),10)||0; }
+
+function fmt2(n) { return 'R$ ' + Math.round(n).toLocaleString('pt-BR'); }
 
 function mesLabel(ym) {
   const [y,m] = ym.split('-');
@@ -98,7 +122,6 @@ function showPane(pane) {
   if (pane==='crm')        renderCRM();
 }
 
-// ─── DATA NA TOPBAR ──────────────────────────
 function setData() {
   const d = new Date();
   document.getElementById('topbar-date').textContent =
@@ -132,7 +155,9 @@ function renderEstoque() {
   const labels = {disponivel:'Disponível',reservado:'Reservado',vendido:'Vendido'};
   list.innerHTML = carros.map(c=>`
     <div class="car-list-item">
-      <div class="car-emoji">${getEmoji(c.marca)}</div>
+      <div class="car-emoji">${c.fotos&&c.fotos[0]
+        ? `<img src="${c.fotos[0]}" style="width:48px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">`
+        : getEmoji(c.marca)}</div>
       <div class="car-info">
         <div class="car-nome">${c.marca} ${c.modelo} · ${c.ano}</div>
         <div class="car-sub">${c.km} km · ${c.cor} · ${c.cambio}</div>
@@ -147,8 +172,8 @@ function renderEstoque() {
 }
 
 async function alterarStatus(id, atual) {
-  const ciclo = ['disponivel','reservado','vendido'];
-  const novo  = ciclo[(ciclo.indexOf(atual)+1)%3];
+  const ciclo  = ['disponivel','reservado','vendido'];
+  const novo   = ciclo[(ciclo.indexOf(atual)+1)%3];
   try { await colCarros.doc(id).update({status:novo}); toast('Situação: '+novo); }
   catch(e) { toast('Erro ao atualizar','erro'); }
 }
@@ -160,20 +185,30 @@ async function excluirCarro(id) {
 }
 
 // =============================================
-//  MÓDULO 2 — ADICIONAR CARRO
+//  MÓDULO 2 — ADICIONAR CARRO (com Cloudinary)
 // =============================================
 
 document.getElementById('file-input').addEventListener('change', function() {
   const preview = document.getElementById('fotos-preview');
   Array.from(this.files).forEach(file => {
+    // Guarda o arquivo para upload posterior
+    fotosParaUpload.push(file);
+
+    // Preview local enquanto não sobe
     const url = URL.createObjectURL(file);
     fotoUrls.push(url);
+
     const wrap = document.createElement('div'); wrap.className='foto-thumb-wrap';
     const img  = document.createElement('img');  img.src=url; img.className='foto-thumb'; img.alt='Foto';
     const del  = document.createElement('button'); del.className='foto-del'; del.textContent='×';
-    del.onclick = ()=>{ fotoUrls=fotoUrls.filter(u=>u!==url); wrap.remove(); };
+    del.onclick = () => {
+      const idx = fotoUrls.indexOf(url);
+      if (idx > -1) { fotoUrls.splice(idx,1); fotosParaUpload.splice(idx,1); }
+      wrap.remove();
+    };
     wrap.appendChild(img); wrap.appendChild(del); preview.appendChild(wrap);
   });
+  this.value = ''; // permite selecionar o mesmo arquivo novamente
 });
 
 async function salvarCarro() {
@@ -183,25 +218,37 @@ async function salvarCarro() {
   const preco  = document.getElementById('f-preco').value.trim();
   if (!marca||!modelo||!ano||!preco) { toast('Preencha: marca, modelo, ano e preço','erro'); return; }
 
-  const custo = parseMoeda(document.getElementById('f-custo').value);
-
-  const carro = {
-    marca, modelo, ano:parseInt(ano,10),
-    km:    document.getElementById('f-km').value    || '—',
-    cor:   document.getElementById('f-cor').value   || '—',
-    comb:  document.getElementById('f-comb').value,
-    cambio:document.getElementById('f-cambio').value,
-    desc:  document.getElementById('f-desc-car').value,
-    preco, custo,
-    troca: document.getElementById('f-troca').value,
-    status:document.querySelector('input[name="status"]:checked').value,
-    fotos: [...fotoUrls],
-    criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
-  };
+  const btnSalvar = document.querySelector('[onclick="salvarCarro()"]');
+  btnSalvar.disabled = true;
+  btnSalvar.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Salvando fotos...';
 
   try {
+    // Faz upload de todas as fotos pro Cloudinary
+    let urlsNuvem = [];
+    if (fotosParaUpload.length > 0) {
+      toast('Enviando ' + fotosParaUpload.length + ' foto(s)...');
+      urlsNuvem = await Promise.all(fotosParaUpload.map(f => uploadFoto(f)));
+    }
+
+    const custo = parseMoeda(document.getElementById('f-custo').value);
+
+    const carro = {
+      marca, modelo, ano:parseInt(ano,10),
+      km:    document.getElementById('f-km').value    || '—',
+      cor:   document.getElementById('f-cor').value   || '—',
+      comb:  document.getElementById('f-comb').value,
+      cambio:document.getElementById('f-cambio').value,
+      desc:  document.getElementById('f-desc-car').value,
+      preco, custo,
+      troca: document.getElementById('f-troca').value,
+      status:document.querySelector('input[name="status"]:checked').value,
+      fotos: urlsNuvem, // URLs permanentes do Cloudinary
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+
     const ref = await colCarros.add(carro);
-    // Se informou custo de aquisição, lança automaticamente no financeiro
+
+    // Lança custo de aquisição no financeiro automaticamente
     if (custo > 0) {
       await colFinanceiro.add({
         tipo:'despesa', desc:`Compra ${marca} ${modelo} ${ano}`,
@@ -210,9 +257,16 @@ async function salvarCarro() {
         criadoEm: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
+
     toast('Veículo salvo! Site já atualizado.');
-    limparCarro(); showPane('estoque');
-  } catch(e) { toast('Erro: '+e.message,'erro'); }
+    limparCarro();
+    showPane('estoque');
+  } catch(e) {
+    toast('Erro: ' + e.message, 'erro');
+  } finally {
+    btnSalvar.disabled = false;
+    btnSalvar.innerHTML = '<i class="ti ti-device-floppy"></i> Salvar veículo';
+  }
 }
 
 function limparCarro() {
@@ -224,6 +278,7 @@ function limparCarro() {
   document.getElementById('st-d').checked=true;
   document.getElementById('fotos-preview').innerHTML='';
   fotoUrls=[];
+  fotosParaUpload=[];
 }
 
 // =============================================
@@ -290,8 +345,7 @@ function renderCustos() {
 }
 
 function toggleCustoItem(id) {
-  const el = document.getElementById(id);
-  el.classList.toggle('open');
+  document.getElementById(id).classList.toggle('open');
 }
 
 function abrirCustoForm(carroId, nome) {
@@ -319,18 +373,8 @@ async function salvarGasto() {
   const nomeC = carro ? `${carro.marca} ${carro.modelo} ${carro.ano}` : 'Veículo';
 
   try {
-    // Salva o gasto vinculado ao carro
-    await colGastos.add({
-      carroId: custoCarroAtivo, tipo, desc: desc||tipo, val,
-      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    // Lança automaticamente no financeiro como despesa
-    await colFinanceiro.add({
-      tipo:'despesa', desc:`${tipo} — ${nomeC}`,
-      cat:'Manutenção veículo', val, data:hojeISO(),
-      carroId: custoCarroAtivo,
-      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    await colGastos.add({ carroId:custoCarroAtivo, tipo, desc:desc||tipo, val, criadoEm:firebase.firestore.FieldValue.serverTimestamp() });
+    await colFinanceiro.add({ tipo:'despesa', desc:`${tipo} — ${nomeC}`, cat:'Manutenção veículo', val, data:hojeISO(), carroId:custoCarroAtivo, criadoEm:firebase.firestore.FieldValue.serverTimestamp() });
     toast('Gasto salvo e lançado no financeiro!');
     fecharCustoForm();
     renderCustos();
@@ -387,7 +431,6 @@ function renderFinanceiro() {
   document.getElementById('fin-sal').className   = 'stat-val '+(sal>=0?'green':'red');
   document.getElementById('fin-mar').textContent = mar+'%';
 
-  // Barras
   const totCat={};
   lista.filter(l=>l.tipo==='despesa').forEach(l=>{ totCat[l.cat]=(totCat[l.cat]||0)+l.val; });
   const top5 = Object.entries(totCat).sort((a,b)=>b[1]-a[1]).slice(0,5);
@@ -401,7 +444,6 @@ function renderFinanceiro() {
         </div>`).join('')
     : '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Sem despesas no período</div>';
 
-  // Resumo
   const corS = sal>=0?'var(--green)':'var(--red)';
   const cls  = sal>=0?'saldo-box saldo-pos':'saldo-box saldo-neg';
   document.getElementById('fin-resumo-detalhe').innerHTML=`
@@ -412,7 +454,6 @@ function renderFinanceiro() {
       <div style="text-align:right"><div class="saldo-label">Margem</div><div class="saldo-val" style="color:${corS}">${mar}%</div></div>
     </div>`;
 
-  // Extrato
   const listaEl = document.getElementById('fin-lista');
   if (!lista.length) { listaEl.innerHTML=`<div class="empty-state"><i class="ti ti-receipt-off"></i><p>Nenhum lançamento no período.</p></div>`; return; }
   listaEl.innerHTML = [...lista].sort((a,b)=>b.data.localeCompare(a.data)).map(l=>`
@@ -467,13 +508,10 @@ async function renderMeta() {
     const doc = await colMetas.doc(mes).get();
     if (!doc.exists) { document.getElementById('meta-progress').innerHTML=''; return; }
     const meta = doc.data();
-
-    // Calcula faturamento real do mês
-    const recMes = lancamentos.filter(l=>l.tipo==='receita'&&l.data.startsWith(mes)).reduce((s,l)=>s+l.val,0);
-    const vendMes = carros.filter(c=>c.status==='vendido').length; // simplificado
+    const recMes  = lancamentos.filter(l=>l.tipo==='receita'&&l.data.startsWith(mes)).reduce((s,l)=>s+l.val,0);
+    const vendMes = carros.filter(c=>c.status==='vendido').length;
     const pctFat  = meta.valor>0 ? Math.min(Math.round(recMes/meta.valor*100),100) : 0;
     const pctVend = meta.unidades>0 ? Math.min(Math.round(vendMes/meta.unidades*100),100) : 0;
-
     document.getElementById('meta-progress').innerHTML=`
       <div style="margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
@@ -496,8 +534,8 @@ async function renderMeta() {
 }
 
 async function salvarVendedor() {
-  const nome      = document.getElementById('vend-nome').value.trim();
-  const comissao  = parseFloat(document.getElementById('vend-comissao').value)||0;
+  const nome     = document.getElementById('vend-nome').value.trim();
+  const comissao = parseFloat(document.getElementById('vend-comissao').value)||0;
   if (!nome) { toast('Informe o nome do vendedor','erro'); return; }
   try {
     await colVendedores.add({nome,comissao,criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
@@ -511,7 +549,6 @@ function iniciarListenerVendedores() {
   colVendedores.orderBy('nome').onSnapshot(snap=>{
     vendedores = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderVendedores();
-    // Atualiza select
     const sel = document.getElementById('vend-sel');
     if (sel) sel.innerHTML = vendedores.map(v=>`<option value="${v.id}">${v.nome} (${v.comissao}%)</option>`).join('');
   });
@@ -543,17 +580,8 @@ async function lancarComissao() {
   if (!vend) return;
   const comissaoVal = Math.round(venda*(vend.comissao/100));
   try {
-    await colComissoes.add({
-      vendedorId:vendId, vendedorNome:vend.nome,
-      venda, comissaoVal, comissaoPct:vend.comissao,
-      data:hojeISO(), criadoEm:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    // Lança automaticamente no financeiro
-    await colFinanceiro.add({
-      tipo:'despesa', desc:`Comissão ${vend.nome}`,
-      cat:'Salário / Comissão', val:comissaoVal, data:hojeISO(),
-      criadoEm:firebase.firestore.FieldValue.serverTimestamp()
-    });
+    await colComissoes.add({ vendedorId:vendId, vendedorNome:vend.nome, venda, comissaoVal, comissaoPct:vend.comissao, data:hojeISO(), criadoEm:firebase.firestore.FieldValue.serverTimestamp() });
+    await colFinanceiro.add({ tipo:'despesa', desc:`Comissão ${vend.nome}`, cat:'Salário / Comissão', val:comissaoVal, data:hojeISO(), criadoEm:firebase.firestore.FieldValue.serverTimestamp() });
     document.getElementById('vend-val-venda').value='';
     toast(`Comissão de ${fmt(comissaoVal)} lançada para ${vend.nome}!`);
     renderComissoes();
@@ -632,9 +660,7 @@ function renderCRM() {
   const filtrados = crmFiltro==='todos' ? leads : leads.filter(l=>l.status===crmFiltro);
   const el = document.getElementById('crm-lista');
 
-  if (!filtrados.length) {
-    el.innerHTML=`<div class="empty-state"><i class="ti ti-users"></i><p>Nenhum lead encontrado.</p></div>`; return;
-  }
+  if (!filtrados.length) { el.innerHTML=`<div class="empty-state"><i class="ti ti-users"></i><p>Nenhum lead encontrado.</p></div>`; return; }
 
   const badgeClass = {novo:'badge-novo',contato:'badge-contato',negociando:'badge-negociando',fechado:'badge-fechado',perdido:'badge-perdido'};
   const statusOpts = ['novo','contato','negociando','fechado','perdido'];
@@ -656,7 +682,6 @@ function renderCRM() {
     </div>`).join('');
 }
 
-// Filtros do CRM
 document.querySelectorAll('.crm-filtro').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.crm-filtro').forEach(b=>b.classList.remove('active'));
@@ -670,17 +695,11 @@ document.querySelectorAll('.crm-filtro').forEach(btn=>{
 //  INICIALIZAÇÃO
 // =============================================
 
-// Data na topbar
 setData();
-
-// Data default nos campos
 document.getElementById('fin-data').value  = hojeISO();
 document.getElementById('meta-mes').value  = hojeISO().slice(0,7);
-
-// Tipo padrão financeiro
 setTipo('receita');
 
-// Inicia todos os listeners Firebase em tempo real
 iniciarListenerCarros();
 iniciarListenerFinanceiro();
 iniciarListenerGastos();
