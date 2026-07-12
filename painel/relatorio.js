@@ -1,59 +1,33 @@
 // =============================================
 //  RELATÓRIO MENSAL — AutoPrime
-//  relatorio.js
-//
-//  Lê os dados do mesmo localStorage
-//  que o painel usa. Basta abrir este
-//  arquivo no mesmo navegador do painel.
-//
-//  Quando migrar pro Firebase, só troca
-//  as funções carregarCarros() e
-//  carregarFinanceiro() abaixo.
+//  relatorio.js — lendo do Firebase Firestore
 // =============================================
 
-const KEY_CARROS     = 'autoprime_carros';
-const KEY_FINANCEIRO = 'autoprime_financeiro';
+const firebaseConfig = {
+  apiKey:            "AIzaSyDzJP-XF37RCedf_wN7svLg1YZ82u3ULF8",
+  authDomain:        "painelrevenda-2bc8b.firebaseapp.com",
+  projectId:         "painelrevenda-2bc8b",
+  storageBucket:     "painelrevenda-2bc8b.firebasestorage.app",
+  messagingSenderId: "57821691298",
+  appId:             "1:57821691298:web:04198c179330458a3ac6fb"
+};
 
+// Inicializa só se ainda não foi inicializado
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
+const db   = firebase.firestore();
+const auth = firebase.auth();
+
+// ─── ESTADO ──────────────────────────────────
+let lancamentos = [];
+let carros      = [];
+
+// ─── UTILITÁRIOS ─────────────────────────────
 const MESES_NOME = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                     'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
-// ─── DADOS PADRÃO (caso o painel ainda não tenha salvo nada) ─
-const CARROS_EXEMPLO = [
-  { marca:'Volkswagen', modelo:'Gol 1.6', ano:2021, cor:'Prata', status:'vendido', preco:'R$ 58.900' },
-  { marca:'Fiat', modelo:'Strada Volcano', ano:2023, cor:'Branco', status:'vendido', preco:'R$ 147.900' },
-  { marca:'Toyota', modelo:'Corolla XEi', ano:2020, cor:'Preto', status:'disponivel', preco:'R$ 118.900' },
-];
-
-const FINANCEIRO_EXEMPLO = [
-  { id:1, tipo:'receita', desc:'Venda Corolla XEi 2020',    cat:'Venda de veículo',   val:118900, data:'2025-05-03' },
-  { id:2, tipo:'receita', desc:'Entrada Onix Plus',          cat:'Entrada / Sinal',    val:5000,   data:'2025-05-07' },
-  { id:3, tipo:'despesa', desc:'Combustível frota',          cat:'Combustível',         val:350,    data:'2025-05-08' },
-  { id:4, tipo:'despesa', desc:'Aluguel do mês',             cat:'Aluguel / Sede',     val:2800,   data:'2025-05-10' },
-  { id:5, tipo:'despesa', desc:'Comissão vendedor',          cat:'Salário / Comissão', val:1500,   data:'2025-05-03' },
-  { id:6, tipo:'receita', desc:'Financiamento Gol aprovado', cat:'Financiamento',      val:58900,  data:'2025-05-15' },
-  { id:7, tipo:'despesa', desc:'Documentação transferência', cat:'Documentação',       val:420,    data:'2025-05-15' },
-  { id:8, tipo:'receita', desc:'Venda Strada Volcano CD',    cat:'Venda de veículo',   val:147900, data:'2025-05-20' },
-  { id:9, tipo:'despesa', desc:'Marketing redes sociais',    cat:'Marketing',          val:600,    data:'2025-05-22' },
-];
-
-// ─── CARREGAR DADOS DO LOCALSTORAGE ──────────
-function carregarCarros() {
-  try {
-    const s = localStorage.getItem(KEY_CARROS);
-    if (s) { const d = JSON.parse(s); if (Array.isArray(d) && d.length) return d; }
-  } catch(e) {}
-  return CARROS_EXEMPLO;
-}
-
-function carregarFinanceiro() {
-  try {
-    const s = localStorage.getItem(KEY_FINANCEIRO);
-    if (s) { const d = JSON.parse(s); if (Array.isArray(d) && d.length) return d; }
-  } catch(e) {}
-  return FINANCEIRO_EXEMPLO;
-}
-
-// ─── UTILITÁRIOS ─────────────────────────────
 function fmt(n) {
   return 'R$ ' + Math.round(n).toLocaleString('pt-BR');
 }
@@ -67,51 +41,74 @@ function mesExtenso(yyyymm) {
   return MESES_NOME[parseInt(m, 10) - 1] + ' / ' + y;
 }
 
+// ─── VERIFICA LOGIN ──────────────────────────
+auth.onAuthStateChanged(user => {
+  if (!user) {
+    window.location.href = 'login.html';
+  } else {
+    carregarDados();
+  }
+});
+
+// ─── CARREGA DADOS DO FIREBASE ───────────────
+async function carregarDados() {
+  try {
+    // Carrega financeiro
+    const finSnap = await db.collection('financeiro').orderBy('data', 'desc').get();
+    lancamentos = finSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Carrega carros
+    const carSnap = await db.collection('carros').orderBy('criadoEm', 'desc').get();
+    carros = carSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Popula o seletor de meses e renderiza
+    populaMeses();
+    renderRelatorio();
+  } catch(e) {
+    console.error('Erro ao carregar dados:', e);
+    document.getElementById('rel-periodo').textContent = 'Erro ao carregar dados';
+  }
+}
+
 // ─── POPULAR SELECT DE MESES ─────────────────
-function populaMeses(lancamentos) {
-  const sel = document.getElementById('sel-mes');
+function populaMeses() {
+  const sel   = document.getElementById('sel-mes');
   const meses = [...new Set(lancamentos.map(l => l.data.slice(0, 7)))].sort().reverse();
 
   sel.innerHTML = meses.map(m =>
     `<option value="${m}">${mesExtenso(m)}</option>`
   ).join('');
 
-  // Seleciona o mês mais recente por padrão
   if (meses.length) sel.value = meses[0];
 }
 
 // ─── RENDER DO RELATÓRIO ─────────────────────
 function renderRelatorio() {
-  const mes         = document.getElementById('sel-mes').value;
-  const lancamentos = carregarFinanceiro();
-  const carros      = carregarCarros();
+  const mes   = document.getElementById('sel-mes').value;
+  if (!mes) return;
 
-  // Filtra pelo mês selecionado
-  const lista = lancamentos.filter(l => l.data.startsWith(mes));
-  const rec   = lista.filter(l => l.tipo === 'receita');
-  const des   = lista.filter(l => l.tipo === 'despesa');
-
+  const lista  = lancamentos.filter(l => l.data.startsWith(mes));
+  const rec    = lista.filter(l => l.tipo === 'receita');
+  const des    = lista.filter(l => l.tipo === 'despesa');
   const totRec = rec.reduce((s, l) => s + l.val, 0);
   const totDes = des.reduce((s, l) => s + l.val, 0);
   const lucro  = totRec - totDes;
   const mar    = totRec > 0 ? Math.round((lucro / totRec) * 100) : 0;
 
-  // ── Atualiza período e cards ──
+  // Período e cards
   document.getElementById('rel-periodo').textContent = mesExtenso(mes);
   document.getElementById('r-rec').textContent = fmt(totRec);
   document.getElementById('r-des').textContent = fmt(totDes);
 
   const lucroEl = document.getElementById('r-luc');
-  lucroEl.textContent  = fmt(lucro);
-  lucroEl.className    = 'rel-card-val ' + (lucro >= 0 ? 'green' : 'red');
+  lucroEl.textContent = fmt(lucro);
+  lucroEl.className   = 'rel-card-val ' + (lucro >= 0 ? 'green' : 'red');
 
   document.getElementById('r-mar').textContent = mar + '%';
 
-  // ── Veículos vendidos ──
-  // Mostra carros com status "vendido" do estoque
-  // (no Firebase futuramente poderia filtrar por data de venda)
-  const vendidos = carros.filter(c => c.status === 'vendido');
-  const tabVendas = document.getElementById('tab-vendas');
+  // Veículos vendidos
+  const vendidos   = carros.filter(c => c.status === 'vendido');
+  const tabVendas  = document.getElementById('tab-vendas');
 
   if (!vendidos.length) {
     tabVendas.innerHTML = `
@@ -130,7 +127,7 @@ function renderRelatorio() {
       </tr>`).join('');
   }
 
-  // ── Tabela de receitas ──
+  // Receitas
   const tabRec = document.getElementById('tab-rec');
   if (!rec.length) {
     tabRec.innerHTML = `<tr><td colspan="4" style="color:var(--muted);padding:14px 8px;text-align:center;font-style:italic">Nenhuma receita no período</td></tr>`;
@@ -147,7 +144,7 @@ function renderRelatorio() {
   }
   document.getElementById('tot-rec').textContent = fmt(totRec);
 
-  // ── Tabela de despesas ──
+  // Despesas
   const tabDes = document.getElementById('tab-des');
   if (!des.length) {
     tabDes.innerHTML = `<tr><td colspan="4" style="color:var(--muted);padding:14px 8px;text-align:center;font-style:italic">Nenhuma despesa no período</td></tr>`;
@@ -164,8 +161,8 @@ function renderRelatorio() {
   }
   document.getElementById('tot-des').textContent = fmt(totDes);
 
-  // ── Resultado final ──
-  const resEl  = document.getElementById('rel-resultado');
+  // Resultado final
+  const resEl = document.getElementById('rel-resultado');
   resEl.className = 'rel-resultado ' + (lucro >= 0 ? 'positivo' : 'negativo');
 
   const corRes = lucro >= 0 ? '#16A34A' : '#DC2626';
@@ -179,9 +176,5 @@ function renderRelatorio() {
 const hoje = new Date();
 const dh   = hoje.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
 
-document.getElementById('rel-hoje').textContent  = dh;
-document.getElementById('footer-data').textContent = 'Emitido em ' + dh;
-
-// Popula o seletor de meses e renderiza
-populaMeses(carregarFinanceiro());
-renderRelatorio();
+document.getElementById('rel-hoje').textContent     = dh;
+document.getElementById('footer-data').textContent  = 'Emitido em ' + dh;
