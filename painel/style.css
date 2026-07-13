@@ -666,3 +666,219 @@ input[type="file"] { display: none; }
 .btn-sair:hover {
   color: #ff6b6b;
 }
+
+/* =============================================
+   RESPONSIVO MOBILE — Painel AutoPrime
+   Breakpoints: 768px (tablet) e 480px (mobile)
+   ============================================= */
+
+@media (max-width: 768px) {
+
+  /* ── SIDEBAR vira barra inferior no mobile ── */
+  .sidebar {
+    width: 100%;
+    height: 60px;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    flex-direction: row;
+    border-right: none;
+    border-top: 1px solid var(--sb-border);
+    overflow: visible;
+    z-index: 200;
+  }
+
+  .sidebar-logo { display: none; }
+  .sidebar-footer { display: none; }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0;
+    width: 100%;
+    overflow-x: auto;
+    gap: 0;
+  }
+
+  .nav-group-label { display: none; }
+
+  .nav-item {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 8px 6px;
+    font-size: 10px;
+    border-left: none;
+    border-top: 2px solid transparent;
+    min-width: 48px;
+    flex-shrink: 0;
+  }
+
+  .nav-item i { font-size: 20px; }
+
+  .nav-item span {
+    font-size: 9px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 52px;
+    text-align: center;
+  }
+
+  .nav-item.active {
+    background: transparent;
+    color: var(--sb-active);
+    border-left: none;
+    border-top: 2px solid var(--sb-active);
+    margin: 0;
+    border-radius: 0;
+    padding: 8px 6px;
+  }
+
+  .nav-item.active i { color: var(--sb-active); }
+
+  /* ── CONTEÚDO principal ── */
+  .main-content {
+    margin-left: 0;
+    margin-bottom: 60px; /* espaço pra barra inferior */
+    min-height: calc(100vh - 60px);
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    height: 52px;
+    padding: 0 16px;
+  }
+
+  .page-title { font-size: 15px; }
+  .topbar-date { display: none; } /* Esconde a data no mobile */
+
+  /* ── PANES ── */
+  .pane { padding: 14px 12px; gap: 12px; }
+
+  /* ── STATS ── */
+  .stats-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .stat-card { padding: 12px; gap: 10px; }
+  .stat-icon { width: 34px; height: 34px; }
+  .stat-icon i { font-size: 17px; }
+  .stat-val { font-size: 20px; }
+  .stat-label { font-size: 11px; }
+
+  /* ── CARDS ── */
+  .card { padding: 14px; }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  /* ── LISTA DE CARROS ── */
+  .car-list-item {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 0;
+  }
+
+  .car-emoji { font-size: 22px; width: 36px; }
+  .car-nome  { font-size: 13px; }
+  .car-sub   { font-size: 11px; }
+
+  .car-preco {
+    font-size: 15px;
+    min-width: auto;
+    text-align: left;
+    width: 100%;
+    padding-left: 44px; /* alinha com o nome */
+  }
+
+  .car-badge { font-size: 10px; }
+
+  .car-actions { margin-left: auto; }
+
+  /* ── FORMULÁRIOS ── */
+  .row2, .row3, .form-grid, .two-col-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    font-size: 16px; /* evita zoom automático no iOS */
+    padding: 11px 12px;
+  }
+
+  /* ── BOTÕES ── */
+  .btn-primary, .btn-ghost {
+    width: 100%;
+    justify-content: center;
+    padding: 13px;
+  }
+
+  .btn-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ── FINANCEIRO ── */
+  .tipo-toggle { width: 100%; }
+  .tipo-btn { flex: 1; justify-content: center; }
+
+  .fin-graficos { grid-template-columns: 1fr; }
+
+  .lanc-row { flex-wrap: wrap; gap: 6px; }
+  .lanc-nome { font-size: 12px; }
+  .lanc-data { font-size: 10px; }
+  .lanc-val  { font-size: 12px; }
+
+  /* ── FOTO UPLOAD ── */
+  .foto-area { padding: 20px; }
+  .foto-area i { font-size: 28px; }
+
+  /* ── CUSTO POR VEÍCULO ── */
+  .custo-car-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .custo-car-nome { font-size: 12px; }
+
+  /* ── METAS ── */
+  .meta-progress { }
+
+  /* ── CRM ── */
+  .crm-filtros { gap: 4px; }
+  .crm-filtro  { padding: 5px 10px; font-size: 11px; }
+
+  .lead-item { flex-wrap: wrap; gap: 8px; }
+  .lead-nome { font-size: 13px; }
+  .lead-sub  { font-size: 11px; }
+
+  /* ── TOAST ── */
+  .toast {
+    bottom: 70px; /* fica acima da barra inferior */
+    right: 12px;
+    left: 12px;
+    border-radius: 8px;
+  }
+
+  /* ── STATUS (radio) ── */
+  .status-row { gap: 6px; }
+  .status-opt + label { padding: 7px 12px; font-size: 12px; }
+}
+
+@media (max-width: 380px) {
+  .nav-item span { display: none; }
+  .nav-item { min-width: 40px; }
+  .stat-val { font-size: 18px; }
+}
