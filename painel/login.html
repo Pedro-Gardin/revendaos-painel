@@ -3,384 +3,108 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- Sem indexação pelos buscadores — painel privado -->
+  <meta name="robots" content="noindex, nofollow"/>
   <title>AutoPrime — Entrar</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --dark:   #0a0a0b;
-      --dark2:  #111113;
-      --dark3:  #1a1a1d;
-      --border: #2a2a2e;
-      --txt:    #f5f5f0;
-      --muted:  #a1a1aa;
-      --red:    #dc2626;
-      --green:  #16a34a;
+      --dark:#0a0a0b; --dark2:#111113; --dark3:#1a1a1d;
+      --border:#2a2a2e; --txt:#f5f5f0; --muted:#a1a1aa;
+      --red:#dc2626; --green:#16a34a; --yellow:#d97706;
     }
+    body { font-family:'Inter',sans-serif; background:var(--dark); color:var(--txt); min-height:100vh; display:grid; grid-template-columns:1fr 1fr; }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--dark);
-      color: var(--txt);
-      min-height: 100vh;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-    }
+    /* LADO ESQUERDO */
+    .lado-esq { background:var(--dark2); border-right:1px solid var(--border); display:flex; flex-direction:column; justify-content:space-between; padding:48px; position:relative; overflow:hidden; }
+    .lado-esq::before { content:''; position:absolute; top:-100px; right:-100px; width:400px; height:400px; border-radius:50%; background:radial-gradient(circle,rgba(255,255,255,0.02) 0%,transparent 70%); pointer-events:none; }
+    .esq-logo { font-size:22px; font-weight:800; letter-spacing:2px; color:var(--txt); }
+    .esq-logo span { color:var(--muted); }
+    .esq-meio { position:relative; z-index:1; }
+    .esq-tag { font-size:11px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+    .esq-tag::before { content:''; display:inline-block; width:20px; height:1px; background:var(--muted); }
+    .esq-meio h1 { font-family:'Playfair Display',serif; font-size:clamp(28px,3vw,44px); line-height:1.15; margin-bottom:20px; }
+    .esq-meio h1 em { font-style:italic; color:var(--muted); }
+    .esq-meio p { color:var(--muted); font-size:14px; line-height:1.8; max-width:360px; }
+    .esq-stats { display:flex; gap:40px; border-top:1px solid var(--border); padding-top:28px; }
+    .estat { display:flex; flex-direction:column; gap:3px; }
+    .estat-n { font-family:'Playfair Display',serif; font-size:28px; font-weight:700; }
+    .estat-l { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
 
-    /* LADO ESQUERDO — visual */
-    .lado-esq {
-      background: var(--dark2);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 48px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .lado-esq::before {
-      content: '';
-      position: absolute;
-      top: -100px; right: -100px;
-      width: 400px; height: 400px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .lado-esq::after {
-      content: '';
-      position: absolute;
-      bottom: -80px; left: -80px;
-      width: 300px; height: 300px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.015) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .esq-logo {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      color: var(--txt);
-      position: relative;
-      z-index: 1;
-    }
-
-    .esq-logo span { color: var(--muted); }
-
-    .esq-meio {
-      position: relative;
-      z-index: 1;
-    }
-
-    .esq-tag {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .esq-tag::before {
-      content: '';
-      display: inline-block;
-      width: 20px; height: 1px;
-      background: var(--muted);
-    }
-
-    .esq-meio h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(32px, 3vw, 46px);
-      line-height: 1.15;
-      margin-bottom: 20px;
-    }
-
-    .esq-meio h1 em {
-      font-style: italic;
-      color: var(--muted);
-    }
-
-    .esq-meio p {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.8;
-      max-width: 360px;
-    }
-
-    .esq-stats {
-      display: flex;
-      gap: 40px;
-      position: relative;
-      z-index: 1;
-      border-top: 1px solid var(--border);
-      padding-top: 28px;
-    }
-
-    .estat { display: flex; flex-direction: column; gap: 3px; }
-    .estat-n { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; }
-    .estat-l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-
-    /* LADO DIREITO — formulário */
-    .lado-dir {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 48px 32px;
-    }
-
-    .login-box {
-      width: 100%;
-      max-width: 380px;
-    }
-
-    .login-titulo {
-      font-size: 22px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .login-sub {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 36px;
-    }
-
-    /* Campos */
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 16px;
-    }
-
-    .field label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--txt);
-      letter-spacing: 0.3px;
-    }
-
-    .input-wrap {
-      position: relative;
-    }
-
-    .input-wrap i {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 16px;
-      color: var(--muted);
-      pointer-events: none;
-    }
-
-    .input-wrap input {
-      width: 100%;
-      padding: 11px 12px 11px 38px;
-      background: var(--dark3);
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      color: var(--txt);
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .input-wrap input:focus { border-color: #ffffff40; }
-    .input-wrap input::placeholder { color: var(--muted); }
-
-    /* Toggle senha */
-    .toggle-senha {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 16px;
-      padding: 0;
-      display: flex;
-      align-items: center;
-    }
-
-    /* Lembrar + esqueci */
-    .login-opcoes {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
-    }
-
-    .lembrar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: var(--muted);
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .lembrar input { cursor: pointer; accent-color: var(--txt); }
-
-    .esqueci {
-      font-size: 13px;
-      color: var(--muted);
-      text-decoration: none;
-      transition: color 0.2s;
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .esqueci:hover { color: var(--txt); }
-
-    /* Botão entrar */
-    .btn-entrar {
-      width: 100%;
-      background: var(--txt);
-      color: var(--dark);
-      border: none;
-      border-radius: 8px;
-      padding: 13px;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: opacity 0.2s;
-      letter-spacing: 0.3px;
-    }
-
-    .btn-entrar:hover { opacity: 0.88; }
-    .btn-entrar:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    /* Loading spinner */
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spin { animation: spin 0.8s linear infinite; display: inline-block; }
+    /* LADO DIREITO */
+    .lado-dir { display:flex; align-items:center; justify-content:center; padding:48px 32px; }
+    .login-box { width:100%; max-width:380px; }
+    .login-titulo { font-size:22px; font-weight:700; margin-bottom:6px; }
+    .login-sub { font-size:13px; color:var(--muted); margin-bottom:32px; }
 
     /* Mensagens */
-    .msg {
-      display: none;
-      padding: 12px 14px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      margin-bottom: 16px;
-      align-items: center;
-      gap: 8px;
-    }
+    .msg { display:none; padding:12px 14px; border-radius:8px; font-size:13px; font-weight:500; margin-bottom:16px; align-items:center; gap:8px; }
+    .msg.show { display:flex; }
+    .msg.erro { background:#fef2f2; color:var(--red); border:1px solid #fecaca; }
+    .msg.aviso { background:#fffbeb; color:var(--yellow); border:1px solid #fde68a; }
+    .msg.ok { background:#f0fdf4; color:var(--green); border:1px solid #bbf7d0; }
 
-    .msg.show { display: flex; }
-    .msg.erro  { background: #fef2f2; color: var(--red); border: 1px solid #fecaca; }
-    .msg.ok    { background: #f0fdf4; color: var(--green); border: 1px solid #bbf7d0; }
+    /* Bloqueio */
+    .bloqueio-box { display:none; background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:20px; text-align:center; margin-bottom:16px; }
+    .bloqueio-box.show { display:block; }
+    .bloqueio-box i { font-size:32px; color:var(--red); display:block; margin-bottom:10px; }
+    .bloqueio-box p { font-size:13px; color:var(--red); line-height:1.6; }
+    .bloqueio-countdown { font-size:28px; font-weight:700; color:var(--red); margin:10px 0; }
 
-    /* Modal esqueci senha */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
+    /* Campos */
+    .field { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+    .field label { font-size:12px; font-weight:600; color:var(--txt); }
+    .input-wrap { position:relative; }
+    .input-wrap i.icone { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:16px; color:var(--muted); pointer-events:none; }
+    .input-wrap input { width:100%; padding:11px 12px 11px 38px; background:var(--dark3); border:1.5px solid var(--border); border-radius:8px; font-family:'Inter',sans-serif; font-size:16px; color:var(--txt); outline:none; transition:border-color 0.2s; }
+    .input-wrap input:focus { border-color:rgba(255,255,255,0.3); }
+    .input-wrap input::placeholder { color:var(--muted); font-size:14px; }
+    .toggle-senha { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px; padding:0; display:flex; align-items:center; }
 
-    .modal-overlay.aberto { display: flex; }
+    /* Opções */
+    .login-opcoes { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+    .lembrar { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); cursor:pointer; user-select:none; }
+    .lembrar input { cursor:pointer; accent-color:var(--txt); }
+    .esqueci { font-size:13px; color:var(--muted); background:none; border:none; cursor:pointer; font-family:'Inter',sans-serif; transition:color 0.2s; }
+    .esqueci:hover { color:var(--txt); }
 
-    .modal-box {
-      background: var(--dark2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 28px;
-      width: 100%;
-      max-width: 380px;
-    }
+    /* Botão */
+    .btn-entrar { width:100%; background:var(--txt); color:var(--dark); border:none; border-radius:8px; padding:13px; font-family:'Inter',sans-serif; font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:opacity 0.2s; }
+    .btn-entrar:hover { opacity:0.88; }
+    .btn-entrar:disabled { opacity:0.5; cursor:not-allowed; }
 
-    .modal-titulo {
-      font-size: 17px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
+    /* Tentativas */
+    .tentativas-bar { margin-top:12px; }
+    .tent-label { font-size:11px; color:var(--muted); margin-bottom:4px; }
+    .tent-track { background:var(--dark3); border-radius:4px; height:4px; overflow:hidden; }
+    .tent-fill { height:100%; border-radius:4px; background:var(--red); transition:width 0.3s; }
 
-    .modal-sub {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 20px;
-      line-height: 1.6;
-    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .spin { animation:spin 0.8s linear infinite; display:inline-block; }
 
-    .modal-btns {
-      display: flex;
-      gap: 8px;
-      margin-top: 16px;
-    }
+    /* Modal recuperar */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; align-items:center; justify-content:center; padding:20px; }
+    .modal-overlay.aberto { display:flex; }
+    .modal-box { background:var(--dark2); border:1px solid var(--border); border-radius:12px; padding:28px; width:100%; max-width:380px; }
+    .modal-titulo { font-size:17px; font-weight:700; margin-bottom:6px; }
+    .modal-sub { font-size:13px; color:var(--muted); margin-bottom:20px; line-height:1.6; }
+    .modal-btns { display:flex; gap:8px; margin-top:16px; }
+    .btn-cancelar { flex:1; background:transparent; color:var(--muted); border:1.5px solid var(--border); border-radius:8px; padding:11px; font-family:'Inter',sans-serif; font-size:13px; cursor:pointer; }
+    .btn-enviar { flex:1; background:var(--txt); color:var(--dark); border:none; border-radius:8px; padding:11px; font-family:'Inter',sans-serif; font-size:13px; font-weight:700; cursor:pointer; }
 
-    .btn-cancelar {
-      flex: 1;
-      background: transparent;
-      color: var(--muted);
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      padding: 11px;
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
+    .rodape-login { margin-top:28px; text-align:center; font-size:12px; color:var(--muted); }
 
-    .btn-cancelar:hover { color: var(--txt); border-color: #4a4a4e; }
-
-    .btn-enviar {
-      flex: 1;
-      background: var(--txt);
-      color: var(--dark);
-      border: none;
-      border-radius: 8px;
-      padding: 11px;
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-
-    .btn-enviar:hover { opacity: 0.88; }
-
-    .rodape-login {
-      margin-top: 28px;
-      text-align: center;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    /* Responsivo */
-    @media (max-width: 700px) {
-      body { grid-template-columns: 1fr; }
-      .lado-esq { display: none; }
-      .lado-dir { padding: 40px 24px; }
+    @media (max-width:700px) {
+      body { grid-template-columns:1fr; }
+      .lado-esq { display:none; }
+      .lado-dir { padding:40px 24px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- LADO ESQUERDO -->
   <div class="lado-esq">
     <div class="esq-logo">AUTO<span>PRIME</span></div>
     <div class="esq-meio">
@@ -395,70 +119,77 @@
     </div>
   </div>
 
-  <!-- LADO DIREITO -->
   <div class="lado-dir">
     <div class="login-box">
 
       <div class="login-titulo">Bem-vindo de volta</div>
       <div class="login-sub">Entre com seu email e senha para acessar o painel.</div>
 
-      <!-- Mensagem de erro/sucesso -->
-      <div class="msg erro" id="msg-erro">
-        <i class="ti ti-alert-circle"></i>
-        <span id="msg-erro-txt">Email ou senha incorretos.</span>
+      <!-- Bloqueio por excesso de tentativas -->
+      <div class="bloqueio-box" id="bloqueio-box">
+        <i class="ti ti-shield-lock"></i>
+        <p>Acesso temporariamente bloqueado por muitas tentativas incorretas.</p>
+        <div class="bloqueio-countdown" id="bloqueio-countdown">15 min</div>
+        <p>Aguarde ou tente recuperar sua senha.</p>
       </div>
-      <div class="msg ok" id="msg-ok">
-        <i class="ti ti-check"></i>
-        <span id="msg-ok-txt">Link enviado! Verifique seu email.</span>
-      </div>
+
+      <!-- Mensagens -->
+      <div class="msg erro" id="msg-erro"><i class="ti ti-alert-circle"></i><span id="msg-erro-txt"></span></div>
+      <div class="msg aviso" id="msg-aviso"><i class="ti ti-alert-triangle"></i><span id="msg-aviso-txt"></span></div>
+      <div class="msg ok" id="msg-ok"><i class="ti ti-check"></i><span id="msg-ok-txt"></span></div>
 
       <!-- Formulário -->
-      <div class="field">
-        <label>Email</label>
-        <div class="input-wrap">
-          <i class="ti ti-mail"></i>
-          <input type="email" id="inp-email" placeholder="seu@email.com" autocomplete="email"/>
+      <div id="form-login">
+        <div class="field">
+          <label>Email</label>
+          <div class="input-wrap">
+            <i class="ti ti-mail icone"></i>
+            <input type="email" id="inp-email" placeholder="seu@email.com" autocomplete="email"/>
+          </div>
         </div>
-      </div>
 
-      <div class="field">
-        <label>Senha</label>
-        <div class="input-wrap">
-          <i class="ti ti-lock"></i>
-          <input type="password" id="inp-senha" placeholder="••••••••" autocomplete="current-password"/>
-          <button class="toggle-senha" onclick="toggleSenha()" type="button" id="btn-olho">
-            <i class="ti ti-eye" id="icone-olho"></i>
-          </button>
+        <div class="field">
+          <label>Senha</label>
+          <div class="input-wrap">
+            <i class="ti ti-lock icone"></i>
+            <input type="password" id="inp-senha" placeholder="••••••••" autocomplete="current-password"/>
+            <button class="toggle-senha" onclick="toggleSenha()" type="button">
+              <i class="ti ti-eye" id="icone-olho"></i>
+            </button>
+          </div>
         </div>
+
+        <!-- Barra de tentativas -->
+        <div class="tentativas-bar" id="tent-bar" style="display:none">
+          <div class="tent-label" id="tent-label"></div>
+          <div class="tent-track"><div class="tent-fill" id="tent-fill"></div></div>
+        </div>
+
+        <div class="login-opcoes" style="margin-top:16px">
+          <label class="lembrar">
+            <input type="checkbox" id="chk-lembrar"/> Continuar conectado
+          </label>
+          <button class="esqueci" onclick="abrirRecuperar()">Esqueci minha senha</button>
+        </div>
+
+        <button class="btn-entrar" id="btn-entrar" onclick="entrar()">
+          <i class="ti ti-login"></i> Entrar no painel
+        </button>
       </div>
 
-      <div class="login-opcoes">
-        <label class="lembrar">
-          <input type="checkbox" id="chk-lembrar"/> Continuar conectado
-        </label>
-        <button class="esqueci" onclick="abrirRecuperar()">Esqueci minha senha</button>
-      </div>
-
-      <button class="btn-entrar" id="btn-entrar" onclick="entrar()">
-        <i class="ti ti-login"></i> Entrar no painel
-      </button>
-
-      <div class="rodape-login">
-        Problemas para acessar? Fale com o suporte.
-      </div>
-
+      <div class="rodape-login">Acesso restrito · AutoPrime © 2025</div>
     </div>
   </div>
 
-  <!-- MODAL RECUPERAR SENHA -->
+  <!-- Modal recuperar senha -->
   <div class="modal-overlay" id="modal-recuperar">
     <div class="modal-box">
       <div class="modal-titulo">Recuperar senha</div>
-      <div class="modal-sub">Digite seu email cadastrado e enviaremos um link para você criar uma nova senha.</div>
+      <div class="modal-sub">Digite seu email e enviaremos um link para criar uma nova senha.</div>
       <div class="field">
         <label>Email</label>
         <div class="input-wrap">
-          <i class="ti ti-mail"></i>
+          <i class="ti ti-mail icone"></i>
           <input type="email" id="inp-recuperar" placeholder="seu@email.com"/>
         </div>
       </div>
@@ -469,9 +200,9 @@
     </div>
   </div>
 
-  <!-- Firebase Auth -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="auth-guard.js"></script>
   <script>
     const firebaseConfig = {
       apiKey:            "AIzaSyDzJP-XF37RCedf_wN7svLg1YZ82u3ULF8",
@@ -485,21 +216,30 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
-    // Se já tiver logado, vai direto pro painel
-    auth.onAuthStateChanged(user => {
-      if (user) window.location.href = 'index.html';
+    // Se já estiver logado vai pro painel
+    auth.onAuthStateChanged(user => { if (user) window.location.href = 'index.html'; });
+
+    // Verifica bloqueio ao carregar
+    window.addEventListener('load', () => {
+      if (window._authGuard && window._authGuard.verificarBloqueio()) {
+        mostrarBloqueio();
+      }
     });
 
-    // ── ENTRAR ──────────────────────────────
+    // ── ENTRAR ───────────────────────────────
     async function entrar() {
-      const email = document.getElementById('inp-email').value.trim();
-      const senha = document.getElementById('inp-senha').value;
+      // Verifica bloqueio
+      if (window._authGuard && window._authGuard.verificarBloqueio()) {
+        mostrarBloqueio(); return;
+      }
+
+      const email  = document.getElementById('inp-email').value.trim();
+      const senha  = document.getElementById('inp-senha').value;
       const lembrar = document.getElementById('chk-lembrar').checked;
 
-      if (!email || !senha) {
-        mostrarErro('Preencha email e senha.');
-        return;
-      }
+      if (!email || !senha) { mostrarErro('Preencha email e senha.'); return; }
+      if (!email.includes('@')) { mostrarErro('Email inválido.'); return; }
+      if (senha.length < 6) { mostrarErro('Senha deve ter ao menos 6 caracteres.'); return; }
 
       setLoading(true);
       limparMensagens();
@@ -508,32 +248,71 @@
         const persistencia = lembrar
           ? firebase.auth.Auth.Persistence.LOCAL
           : firebase.auth.Auth.Persistence.SESSION;
-
         await auth.setPersistence(persistencia);
         await auth.signInWithEmailAndPassword(email, senha);
-        // onAuthStateChanged vai redirecionar automaticamente
+        // sucesso — onAuthStateChanged redireciona
       } catch(e) {
         setLoading(false);
-        mostrarErro(traduzirErro(e.code));
+        // Registra tentativa falha
+        if (window._authGuard) {
+          const tentativas = window._authGuard.registrarTentativaFalha();
+          const restantes  = 5 - tentativas;
+
+          if (window._authGuard.verificarBloqueio()) {
+            mostrarBloqueio(); return;
+          }
+
+          if (restantes <= 2 && restantes > 0) {
+            mostrarBarraTentativas(tentativas);
+            mostrarAviso(`Atenção: ${restantes} tentativa(s) restante(s) antes do bloqueio.`);
+          } else {
+            mostrarErro(traduzirErro(e.code));
+          }
+        } else {
+          mostrarErro(traduzirErro(e.code));
+        }
       }
     }
 
-    // Entrar com Enter
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Enter') entrar();
-    });
+    // Enter para logar
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+
+    // ── BLOQUEIO ────────────────────────────
+    function mostrarBloqueio() {
+      document.getElementById('form-login').style.opacity = '0.3';
+      document.getElementById('form-login').style.pointerEvents = 'none';
+      document.getElementById('bloqueio-box').classList.add('show');
+      atualizarContagem();
+    }
+
+    function atualizarContagem() {
+      if (!window._authGuard || !window._authGuard.verificarBloqueio()) {
+        document.getElementById('bloqueio-box').classList.remove('show');
+        document.getElementById('form-login').style.opacity = '1';
+        document.getElementById('form-login').style.pointerEvents = 'auto';
+        return;
+      }
+      const min = window._authGuard.tempoRestanteBloqueio();
+      document.getElementById('bloqueio-countdown').textContent = min + ' min';
+      setTimeout(atualizarContagem, 30000);
+    }
+
+    // ── BARRA DE TENTATIVAS ─────────────────
+    function mostrarBarraTentativas(tentativas) {
+      const bar   = document.getElementById('tent-bar');
+      const fill  = document.getElementById('tent-fill');
+      const label = document.getElementById('tent-label');
+      bar.style.display = 'block';
+      fill.style.width  = (tentativas / 5 * 100) + '%';
+      label.textContent = `${tentativas}/5 tentativas incorretas`;
+    }
 
     // ── TOGGLE SENHA ────────────────────────
     function toggleSenha() {
       const inp  = document.getElementById('inp-senha');
       const icon = document.getElementById('icone-olho');
-      if (inp.type === 'password') {
-        inp.type = 'text';
-        icon.className = 'ti ti-eye-off';
-      } else {
-        inp.type = 'password';
-        icon.className = 'ti ti-eye';
-      }
+      inp.type   = inp.type === 'password' ? 'text' : 'password';
+      icon.className = inp.type === 'password' ? 'ti ti-eye' : 'ti ti-eye-off';
     }
 
     // ── RECUPERAR SENHA ─────────────────────
@@ -555,7 +334,7 @@
         fecharRecuperar();
         mostrarOk('Link enviado para ' + email + '. Verifique sua caixa de entrada.');
       } catch(e) {
-        mostrarErro('Email não encontrado. Verifique e tente novamente.');
+        mostrarErro('Email não encontrado.');
       }
     }
 
@@ -568,31 +347,22 @@
         : '<i class="ti ti-login"></i> Entrar no painel';
     }
 
-    function mostrarErro(msg) {
-      limparMensagens();
-      document.getElementById('msg-erro-txt').textContent = msg;
-      document.getElementById('msg-erro').classList.add('show');
-    }
-
-    function mostrarOk(msg) {
-      limparMensagens();
-      document.getElementById('msg-ok-txt').textContent = msg;
-      document.getElementById('msg-ok').classList.add('show');
-    }
-
     function limparMensagens() {
-      document.getElementById('msg-erro').classList.remove('show');
-      document.getElementById('msg-ok').classList.remove('show');
+      ['msg-erro','msg-aviso','msg-ok'].forEach(id => document.getElementById(id).classList.remove('show'));
     }
+
+    function mostrarErro(msg)  { limparMensagens(); document.getElementById('msg-erro-txt').textContent=msg; document.getElementById('msg-erro').classList.add('show'); }
+    function mostrarAviso(msg) { limparMensagens(); document.getElementById('msg-aviso-txt').textContent=msg; document.getElementById('msg-aviso').classList.add('show'); }
+    function mostrarOk(msg)    { limparMensagens(); document.getElementById('msg-ok-txt').textContent=msg; document.getElementById('msg-ok').classList.add('show'); }
 
     function traduzirErro(code) {
       const erros = {
-        'auth/user-not-found':      'Email não cadastrado.',
-        'auth/wrong-password':      'Senha incorreta. Tente novamente.',
-        'auth/invalid-email':       'Email inválido.',
-        'auth/too-many-requests':   'Muitas tentativas. Aguarde alguns minutos.',
-        'auth/user-disabled':       'Usuário desativado. Contate o suporte.',
-        'auth/invalid-credential':  'Email ou senha incorretos.',
+        'auth/user-not-found':     'Email não cadastrado.',
+        'auth/wrong-password':     'Senha incorreta.',
+        'auth/invalid-email':      'Email inválido.',
+        'auth/too-many-requests':  'Muitas tentativas. Aguarde alguns minutos.',
+        'auth/user-disabled':      'Usuário desativado. Contate o suporte.',
+        'auth/invalid-credential': 'Email ou senha incorretos.',
       };
       return erros[code] || 'Erro ao entrar. Tente novamente.';
     }
