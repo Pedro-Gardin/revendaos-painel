@@ -308,5 +308,18 @@
 
 
 <script src="app.js"></script>
+<script>
+  // Inicializa Firebase após carregar o app.js
+  if (!firebase.apps.length) {
+    firebase.initializeApp({
+      apiKey: "AIzaSyDzJP-XF37RCedf_wN7svLg1YZ82u3ULF8",
+      authDomain: "painelrevenda-2bc8b.firebaseapp.com",
+      projectId: "painelrevenda-2bc8b",
+      storageBucket: "painelrevenda-2bc8b.firebasestorage.app",
+      messagingSenderId: "57821691298",
+      appId: "1:57821691298:web:04198c179330458a3ac6fb"
+    });
+  }
+</script>
 </body>
 </html>
