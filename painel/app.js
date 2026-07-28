@@ -2,7 +2,11 @@
 //  PAINEL AUTOPRIME v2
 //  app.js — com upload de fotos via Cloudinary
 // =============================================
-
+firebase.auth().onAuthStateChanged(function(user) {
+  if (!user) {
+    window.location.replace('login.html');
+  }
+});
 // ─── FIREBASE CONFIG ─────────────────────────
 const firebaseConfig = {
   apiKey:            "AIzaSyDzJP-XF37RCedf_wN7svLg1YZ82u3ULF8",
