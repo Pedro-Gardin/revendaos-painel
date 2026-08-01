@@ -76,7 +76,7 @@ function populaMeses() {
   const meses = [...new Set(lancamentos.map(l => l.data.slice(0, 7)))].sort().reverse();
 
   sel.innerHTML = meses.map(m =>
-    `<option value="${m}">${mesExtenso(m)}</option>`
+    `<option value="${escAttr(m)}">${esc(mesExtenso(m))}</option>`
   ).join('');
 
   if (meses.length) sel.value = meses[0];
@@ -120,10 +120,10 @@ function renderRelatorio() {
   } else {
     tabVendas.innerHTML = vendidos.map(c => `
       <tr>
-        <td><strong>${c.marca} ${c.modelo}</strong></td>
-        <td>${c.ano}</td>
-        <td>${c.cor || '—'}</td>
-        <td class="td-r green"><strong>${c.preco}</strong></td>
+        <td><strong>${esc(c.marca)} ${esc(c.modelo)}</strong></td>
+        <td>${esc(c.ano)}</td>
+        <td>${esc(c.cor || '—')}</td>
+        <td class="td-r green"><strong>${esc(c.preco)}</strong></td>
       </tr>`).join('');
   }
 
@@ -136,9 +136,9 @@ function renderRelatorio() {
       .sort((a, b) => a.data.localeCompare(b.data))
       .map(l => `
         <tr>
-          <td><span class="badge badge-rec">${l.cat}</span></td>
-          <td>${l.desc}</td>
-          <td class="td-r" style="color:var(--muted)">${fmtData(l.data)}</td>
+          <td><span class="badge badge-rec">${esc(l.cat)}</span></td>
+          <td>${esc(l.desc)}</td>
+          <td class="td-r" style="color:var(--muted)">${esc(fmtData(l.data))}</td>
           <td class="td-r green"><strong>${fmt(l.val)}</strong></td>
         </tr>`).join('');
   }
@@ -153,9 +153,9 @@ function renderRelatorio() {
       .sort((a, b) => a.data.localeCompare(b.data))
       .map(l => `
         <tr>
-          <td><span class="badge badge-des">${l.cat}</span></td>
-          <td>${l.desc}</td>
-          <td class="td-r" style="color:var(--muted)">${fmtData(l.data)}</td>
+          <td><span class="badge badge-des">${esc(l.cat)}</span></td>
+          <td>${esc(l.desc)}</td>
+          <td class="td-r" style="color:var(--muted)">${esc(fmtData(l.data))}</td>
           <td class="td-r red"><strong>${fmt(l.val)}</strong></td>
         </tr>`).join('');
   }

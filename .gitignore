@@ -1,0 +1,24 @@
+# Dependências e build
+node_modules/
+dist/
+.vite/
+
+# Ambiente e segredos
+.env
+.env.*
+!.env.example
+
+# SO e editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Firebase local
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Logs
+*.log

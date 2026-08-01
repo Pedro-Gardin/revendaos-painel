@@ -76,26 +76,26 @@ function renderGrid() {
     const qtdFotos = c.fotos ? c.fotos.length : 0;
 
     return `
-      <div class="car-card" onclick="abrirModal('${c.id}')">
+      <div class="car-card" onclick="abrirModal('${escAttr(c.id)}')">
         <div class="car-card-foto">
           ${fotoSrc
-            ? `<img src="${fotoSrc}" alt="${c.marca} ${c.modelo}" loading="lazy"/>`
+            ? `<img src="${escUrl(fotoSrc)}" alt="${esc(c.marca)} ${esc(c.modelo)}" loading="lazy"/>`
             : getEmoji(c.marca)}
-          <div class="car-card-badge badge-${c.status}">${statusLabel[c.status] || ''}</div>
+          <div class="car-card-badge badge-${escAttr(c.status)}">${esc(statusLabel[c.status] || '')}</div>
           ${qtdFotos > 1 ? `<div class="car-card-fotos-count"><i class="ti ti-camera"></i> ${qtdFotos}</div>` : ''}
         </div>
         <div class="car-card-body">
-          <div class="car-card-marca">${c.marca} · ${c.ano}</div>
-          <div class="car-card-modelo">${c.modelo}</div>
+          <div class="car-card-marca">${esc(c.marca)} · ${esc(c.ano)}</div>
+          <div class="car-card-modelo">${esc(c.modelo)}</div>
           <div class="car-card-specs">
-            <div class="spec"><i class="ti ti-road"></i>${c.km} km</div>
-            <div class="spec"><i class="ti ti-settings"></i>${c.cambio}</div>
-            <div class="spec"><i class="ti ti-droplet"></i>${c.comb}</div>
+            <div class="spec"><i class="ti ti-road"></i>${esc(c.km)} km</div>
+            <div class="spec"><i class="ti ti-settings"></i>${esc(c.cambio)}</div>
+            <div class="spec"><i class="ti ti-droplet"></i>${esc(c.comb)}</div>
             ${c.troca !== 'nao' ? `<div class="spec"><i class="ti ti-arrows-exchange"></i>Aceita troca</div>` : ''}
           </div>
           <hr class="car-card-divider"/>
           <div class="car-card-preco-row">
-            <div class="car-card-preco">${c.preco}</div>
+            <div class="car-card-preco">${esc(c.preco)}</div>
             <button class="car-card-btn"><i class="ti ti-eye"></i> Ver detalhes</button>
           </div>
         </div>
@@ -125,7 +125,7 @@ function renderGaleria() {
   // Foto principal
   const mgMain = document.getElementById('mg-main');
   if (temFoto) {
-    mgMain.innerHTML = `<img src="${fotos[fotoAtiva]}" alt="${c.marca} ${c.modelo}"/>`;
+    mgMain.innerHTML = `<img src="${escUrl(fotos[fotoAtiva])}" alt="${esc(c.marca)} ${esc(c.modelo)}"/>`;
   } else {
     mgMain.innerHTML = getEmoji(c.marca);
   }
@@ -154,7 +154,7 @@ function renderGaleria() {
     thumbs.style.display = 'flex';
     thumbs.innerHTML = fotos.map((f, i) => `
       <img
-        src="${f}"
+        src="${escUrl(f)}"
         class="mg-thumb ${i === fotoAtiva ? 'active' : ''}"
         onclick="irParaFoto(${i})"
         alt="Foto ${i+1}"
@@ -191,19 +191,19 @@ function renderInfoModal(c) {
 
   document.getElementById('modal-info').innerHTML = `
     <div class="mi-left">
-      <div class="mi-marca">${c.marca} · ${c.ano} · ${status}</div>
-      <div class="mi-modelo">${c.modelo}</div>
+      <div class="mi-marca">${esc(c.marca)} · ${esc(c.ano)} · ${esc(status)}</div>
+      <div class="mi-modelo">${esc(c.modelo)}</div>
       <div class="mi-specs">
-        <div class="mi-spec"><span class="mi-spec-label">Quilometragem</span><span class="mi-spec-val">${c.km} km</span></div>
-        <div class="mi-spec"><span class="mi-spec-label">Câmbio</span><span class="mi-spec-val">${c.cambio}</span></div>
-        <div class="mi-spec"><span class="mi-spec-label">Combustível</span><span class="mi-spec-val">${c.comb}</span></div>
-        <div class="mi-spec"><span class="mi-spec-label">Cor</span><span class="mi-spec-val">${c.cor}</span></div>
-        ${troca ? `<div class="mi-spec"><span class="mi-spec-label">Troca</span><span class="mi-spec-val">${troca}</span></div>` : ''}
+        <div class="mi-spec"><span class="mi-spec-label">Quilometragem</span><span class="mi-spec-val">${esc(c.km)} km</span></div>
+        <div class="mi-spec"><span class="mi-spec-label">Câmbio</span><span class="mi-spec-val">${esc(c.cambio)}</span></div>
+        <div class="mi-spec"><span class="mi-spec-label">Combustível</span><span class="mi-spec-val">${esc(c.comb)}</span></div>
+        <div class="mi-spec"><span class="mi-spec-label">Cor</span><span class="mi-spec-val">${esc(c.cor)}</span></div>
+        ${troca ? `<div class="mi-spec"><span class="mi-spec-label">Troca</span><span class="mi-spec-val">${esc(troca)}</span></div>` : ''}
       </div>
-      ${c.desc ? `<p class="mi-desc">${c.desc}</p>` : ''}
+      ${c.desc ? `<p class="mi-desc">${esc(c.desc)}</p>` : ''}
     </div>
     <div class="mi-right">
-      <div class="mi-preco">${c.preco}</div>
+      <div class="mi-preco">${esc(c.preco)}</div>
       <a class="btn-wpp-modal" href="https://wa.me/5554999999999?text=${msgWpp}" target="_blank">
         <i class="ti ti-brand-whatsapp"></i> Tenho interesse
       </a>

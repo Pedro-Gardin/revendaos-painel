@@ -155,17 +155,17 @@ function renderEstoque() {
   list.innerHTML = carros.map(c=>`
     <div class="car-list-item">
       <div class="car-emoji">${c.fotos&&c.fotos[0]
-        ? `<img src="${c.fotos[0]}" style="width:48px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">`
+        ? `<img src="${escUrl(c.fotos[0])}" style="width:48px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">`
         : getEmoji(c.marca)}</div>
       <div class="car-info">
-        <div class="car-nome">${c.marca} ${c.modelo} · ${c.ano}</div>
-        <div class="car-sub">${c.km} km · ${c.cor} · ${c.cambio}</div>
+        <div class="car-nome">${esc(c.marca)} ${esc(c.modelo)} · ${esc(c.ano)}</div>
+        <div class="car-sub">${esc(c.km)} km · ${esc(c.cor)} · ${esc(c.cambio)}</div>
       </div>
-      <div class="car-preco">${c.preco}</div>
-      <div class="car-badge badge-${c.status}">${labels[c.status]||c.status}</div>
+      <div class="car-preco">${esc(c.preco)}</div>
+      <div class="car-badge badge-${escAttr(c.status)}">${esc(labels[c.status]||c.status)}</div>
       <div class="car-actions">
-        <button class="btn-icon" onclick="alterarStatus('${c.id}','${c.status}')" title="Mudar situação"><i class="ti ti-refresh"></i></button>
-        <button class="btn-icon del" onclick="excluirCarro('${c.id}')" title="Excluir"><i class="ti ti-trash"></i></button>
+        <button class="btn-icon" onclick="alterarStatus('${escAttr(c.id)}','${escAttr(c.status)}')" title="Mudar situação"><i class="ti ti-refresh"></i></button>
+        <button class="btn-icon del" onclick="excluirCarro('${escAttr(c.id)}')" title="Excluir"><i class="ti ti-trash"></i></button>
       </div>
     </div>`).join('');
 }
@@ -313,25 +313,25 @@ function renderCustos() {
 
     return `
       <div class="custo-car-item">
-        <div class="custo-car-header" onclick="toggleCustoItem('ci-${c.id}')">
+        <div class="custo-car-header" onclick="toggleCustoItem('ci-${escAttr(c.id)}')">
           <span style="font-size:22px">${getEmoji(c.marca)}</span>
-          <span class="custo-car-nome">${c.marca} ${c.modelo} ${c.ano} · ${c.km} km</span>
-          <span style="font-size:12px;color:var(--muted);margin-right:8px">Preço: ${c.preco}</span>
+          <span class="custo-car-nome">${esc(c.marca)} ${esc(c.modelo)} ${esc(c.ano)} · ${esc(c.km)} km</span>
+          <span style="font-size:12px;color:var(--muted);margin-right:8px">Preço: ${esc(c.preco)}</span>
           ${custo>0?`<span style="font-size:12px;color:var(--muted);margin-right:8px">Custo: ${fmt(custo)}</span>`:''}
           ${preco>0&&custo>0?`<span class="car-badge ${margem>=15?'badge-disponivel':'badge-reservado'}" style="margin-right:8px">Margem ${margem}%</span>`:''}
           <span class="custo-car-total">${custo>0?fmt(custo):'Sem custos'}</span>
-          <button class="btn-primary-sm" onclick="event.stopPropagation();abrirCustoForm('${c.id}','${c.marca} ${c.modelo}')">
+          <button class="btn-primary-sm" onclick="event.stopPropagation();abrirCustoForm('${escAttr(c.id)}','${escAttr(c.marca+' '+c.modelo)}')">
             <i class="ti ti-plus"></i> Gasto
           </button>
         </div>
-        <div class="custo-car-body" id="ci-${c.id}">
+        <div class="custo-car-body" id="ci-${escAttr(c.id)}">
           ${c.custo>0?`<div class="custo-item-row"><span class="custo-item-tipo">Aquisição</span><span class="custo-item-desc">Compra do veículo</span><span class="custo-item-val">${fmt(c.custo)}</span></div>`:''}
           ${gastosC.map(g=>`
             <div class="custo-item-row">
-              <span class="custo-item-tipo">${g.tipo}</span>
-              <span class="custo-item-desc">${g.desc}</span>
+              <span class="custo-item-tipo">${esc(g.tipo)}</span>
+              <span class="custo-item-desc">${esc(g.desc)}</span>
               <span class="custo-item-val">${fmt(g.val)}</span>
-              <button class="lanc-del" onclick="removerGasto('${g.id}')"><i class="ti ti-trash"></i></button>
+              <button class="lanc-del" onclick="removerGasto('${escAttr(g.id)}')"><i class="ti ti-trash"></i></button>
             </div>`).join('')}
           ${gastosC.length===0&&!c.custo?`<p style="font-size:12px;color:var(--muted);padding:8px 0">Nenhum gasto registrado</p>`:''}
         </div>
@@ -403,7 +403,7 @@ function setTipo(t) {
   document.getElementById('btn-rec').className = 'tipo-btn trec'+(t==='receita'?' active':'');
   document.getElementById('btn-des').className = 'tipo-btn tdes'+(t==='despesa'?' active':'');
   const cats = t==='receita' ? CATS_RECEITA : CATS_DESPESA;
-  document.getElementById('fin-cat').innerHTML = cats.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('fin-cat').innerHTML = cats.map(c=>`<option>${esc(c)}</option>`).join('');
 }
 
 function populaMeses() {
@@ -411,7 +411,7 @@ function populaMeses() {
   const atual = sel.value;
   const meses = [...new Set(lancamentos.map(l=>l.data.slice(0,7)))].sort().reverse();
   sel.innerHTML = '<option value="todos">Todos os períodos</option>'+
-    meses.map(m=>`<option value="${m}">${mesLabel(m)}</option>`).join('');
+    meses.map(m=>`<option value="${escAttr(m)}">${esc(mesLabel(m))}</option>`).join('');
   if (meses.includes(atual)) sel.value=atual;
   else if (meses.length) sel.value=meses[0];
 }
@@ -437,7 +437,7 @@ function renderFinanceiro() {
   document.getElementById('fin-barras').innerHTML = top5.length
     ? top5.map(([cat,val],i)=>`
         <div class="bar-row">
-          <div class="bar-label" title="${cat}">${cat.split(' ')[0]}</div>
+          <div class="bar-label" title="${esc(cat)}">${esc(cat.split(' ')[0])}</div>
           <div class="bar-track"><div class="bar-fill" style="width:${Math.round(val/maxV*100)}%;background:${COR_BARRAS[i%COR_BARRAS.length]}"></div></div>
           <div class="bar-val" style="color:${COR_BARRAS[i%COR_BARRAS.length]}">${fmt(val)}</div>
         </div>`).join('')
@@ -458,10 +458,10 @@ function renderFinanceiro() {
   listaEl.innerHTML = [...lista].sort((a,b)=>b.data.localeCompare(a.data)).map(l=>`
     <div class="lanc-row">
       <div class="lanc-icon ${l.tipo==='receita'?'rec':'des'}"><i class="ti ti-${l.tipo==='receita'?'arrow-up':'arrow-down'}"></i></div>
-      <div class="lanc-desc"><div class="lanc-nome">${l.desc}</div><div class="lanc-cat">${l.cat}</div></div>
-      <div class="lanc-data">${fmtData(l.data)}</div>
+      <div class="lanc-desc"><div class="lanc-nome">${esc(l.desc)}</div><div class="lanc-cat">${esc(l.cat)}</div></div>
+      <div class="lanc-data">${esc(fmtData(l.data))}</div>
       <div class="lanc-val ${l.tipo==='receita'?'rec':'des'}">${l.tipo==='receita'?'+':'-'}${fmt(l.val)}</div>
-      <button class="lanc-del" onclick="removerLanc('${l.id}')"><i class="ti ti-trash"></i></button>
+      <button class="lanc-del" onclick="removerLanc('${escAttr(l.id)}')"><i class="ti ti-trash"></i></button>
     </div>`).join('');
 }
 
@@ -549,7 +549,7 @@ function iniciarListenerVendedores() {
     vendedores = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderVendedores();
     const sel = document.getElementById('vend-sel');
-    if (sel) sel.innerHTML = vendedores.map(v=>`<option value="${v.id}">${v.nome} (${v.comissao}%)</option>`).join('');
+    if (sel) sel.innerHTML = vendedores.map(v=>`<option value="${escAttr(v.id)}">${esc(v.nome)} (${esc(v.comissao)}%)</option>`).join('');
   });
 }
 
@@ -558,10 +558,10 @@ function renderVendedores() {
   if (!vendedores.length) { el.innerHTML=`<p style="font-size:12px;color:var(--muted)">Nenhum vendedor cadastrado.</p>`; return; }
   el.innerHTML = vendedores.map(v=>`
     <div class="vendedor-item">
-      <div class="vend-avatar">${iniciais(v.nome)}</div>
-      <div class="vend-nome">${v.nome}</div>
-      <div class="vend-pct">${v.comissao}% comissão</div>
-      <button class="lanc-del" onclick="removerVendedor('${v.id}')"><i class="ti ti-trash"></i></button>
+      <div class="vend-avatar">${esc(iniciais(v.nome))}</div>
+      <div class="vend-nome">${esc(v.nome)}</div>
+      <div class="vend-pct">${esc(v.comissao)}% comissão</div>
+      <button class="lanc-del" onclick="removerVendedor('${escAttr(v.id)}')"><i class="ti ti-trash"></i></button>
     </div>`).join('');
 }
 
@@ -599,12 +599,12 @@ function renderComissoes() {
   if (!comissoes.length) { el.innerHTML=`<div class="empty-state" style="padding:20px"><i class="ti ti-receipt-off"></i><p>Nenhuma comissão lançada.</p></div>`; return; }
   el.innerHTML = comissoes.slice(0,20).map(c=>`
     <div class="comissao-item">
-      <div class="vend-avatar" style="width:30px;height:30px;font-size:11px">${iniciais(c.vendedorNome)}</div>
-      <div class="comissao-vend">${c.vendedorNome}</div>
+      <div class="vend-avatar" style="width:30px;height:30px;font-size:11px">${esc(iniciais(c.vendedorNome))}</div>
+      <div class="comissao-vend">${esc(c.vendedorNome)}</div>
       <div class="comissao-venda" style="font-size:12px">Venda: ${fmt(c.venda)}</div>
       <div class="comissao-val">+${fmt(c.comissaoVal)}</div>
-      <div style="font-size:11px;color:var(--muted)">${fmtData(c.data)}</div>
-      <button class="lanc-del" onclick="removerComissao('${c.id}')"><i class="ti ti-trash"></i></button>
+      <div style="font-size:11px;color:var(--muted)">${esc(fmtData(c.data))}</div>
+      <button class="lanc-del" onclick="removerComissao('${escAttr(c.id)}')"><i class="ti ti-trash"></i></button>
     </div>`).join('');
 }
 
@@ -666,18 +666,18 @@ function renderCRM() {
 
   el.innerHTML = filtrados.map(l=>`
     <div class="lead-item">
-      <div class="lead-avatar">${iniciais(l.nome)}</div>
+      <div class="lead-avatar">${esc(iniciais(l.nome))}</div>
       <div class="lead-info">
-        <div class="lead-nome">${l.nome}</div>
-        <div class="lead-sub">${l.wpp?'📱 '+l.wpp+' · ':''}${l.origem} · ${l.interesse||'Interesse não informado'}</div>
-        ${l.obs?`<div class="lead-obs">"${l.obs}"</div>`:''}
+        <div class="lead-nome">${esc(l.nome)}</div>
+        <div class="lead-sub">${l.wpp?'📱 '+esc(l.wpp)+' · ':''}${esc(l.origem)} · ${esc(l.interesse||'Interesse não informado')}</div>
+        ${l.obs?`<div class="lead-obs">"${esc(l.obs)}"</div>`:''}
       </div>
-      <select class="lead-status-sel" onchange="atualizarStatusLead('${l.id}',this.value)">
-        ${statusOpts.map(s=>`<option value="${s}" ${l.status===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}
+      <select class="lead-status-sel" onchange="atualizarStatusLead('${escAttr(l.id)}',this.value)">
+        ${statusOpts.map(s=>`<option value="${escAttr(s)}" ${l.status===s?'selected':''}>${esc(s.charAt(0).toUpperCase()+s.slice(1))}</option>`).join('')}
       </select>
-      <span class="lead-badge ${badgeClass[l.status]||''}">${l.status}</span>
-      ${l.wpp?`<a href="https://wa.me/55${l.wpp.replace(/\D/g,'')}" target="_blank" class="btn-icon" title="WhatsApp"><i class="ti ti-brand-whatsapp"></i></a>`:''}
-      <button class="btn-icon del" onclick="removerLead('${l.id}')" title="Remover"><i class="ti ti-trash"></i></button>
+      <span class="lead-badge ${badgeClass[l.status]||''}">${esc(l.status)}</span>
+      ${l.wpp?`<a href="https://wa.me/55${escAttr(l.wpp.replace(/\D/g,''))}" target="_blank" class="btn-icon" title="WhatsApp"><i class="ti ti-brand-whatsapp"></i></a>`:''}
+      <button class="btn-icon del" onclick="removerLead('${escAttr(l.id)}')" title="Remover"><i class="ti ti-trash"></i></button>
     </div>`).join('');
 }
 
