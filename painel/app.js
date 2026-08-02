@@ -12,6 +12,9 @@ const firebaseConfig = {
   appId:             "1:57821691298:web:04198c179330458a3ac6fb"
 };
 
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 // Coleções
 const colCarros     = db.collection('carros');
 const colFinanceiro = db.collection('financeiro');
