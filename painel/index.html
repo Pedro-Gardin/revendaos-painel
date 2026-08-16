@@ -95,7 +95,11 @@
         <div class="card-title"><i class="ti ti-list"></i> Veículos cadastrados</div>
         <button class="btn-primary-sm" onclick="showPane('adicionar')"><i class="ti ti-plus"></i> Novo carro</button>
       </div>
+      <input type="text" id="estoque-busca" placeholder="Buscar por marca, modelo ou ano..."
+  oninput="buscarEstoque(this.value)"
+  style="width:100%;max-width:400px;padding:10px 14px;margin-bottom:16px;border-radius:8px;border:1px solid var(--border);background:var(--dark3);color:var(--txt);font-family:inherit;font-size:13px;outline:none"/>
       <div id="car-list"><div class="loading-state"><i class="ti ti-loader-2"></i><p>Carregando...</p></div></div>
+      <div id="estoque-paginacao"></div>
     </div>
   </div>
 
@@ -308,9 +312,7 @@
 
 
 
-<script src="seguranca.js"></script>
-<script src="auth-guard.js"></script>
-<script src="app.js"></script>
+<script type="module" src="/src/painel/main.js"></script>
 
 </body>
 </html>

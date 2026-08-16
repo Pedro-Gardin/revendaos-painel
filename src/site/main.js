@@ -1,20 +1,10 @@
 // =============================================
 //  SITE PÚBLICO v2 — AutoPrime
-//  app.js — Firebase + carrossel de fotos
+//  main.js — Firebase modular + carrossel de fotos
 // =============================================
-
-// ─── FIREBASE ────────────────────────────────
-const firebaseConfig = {
-  apiKey:            "AIzaSyDzJP-XF37RCedf_wN7svLg1YZ82u3ULF8",
-  authDomain:        "painelrevenda-2bc8b.firebaseapp.com",
-  projectId:         "painelrevenda-2bc8b",
-  storageBucket:     "painelrevenda-2bc8b.firebasestorage.app",
-  messagingSenderId: "57821691298",
-  appId:             "1:57821691298:web:04198c179330458a3ac6fb"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+import { db } from '../shared/firebase.js';
+import { esc, escAttr, escUrl } from '../shared/seguranca.js';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 
 // ─── ESTADO ──────────────────────────────────
 const EMOJIS = { Volkswagen:'🚗',Fiat:'🚙',Toyota:'🚘',Chevrolet:'🚗',Hyundai:'🚗',Jeep:'🚙',Honda:'🚗',Renault:'🚗',Ford:'🚗',Nissan:'🚗',Mitsubishi:'🚙',Kia:'🚗' };
@@ -23,6 +13,9 @@ let todosCarros  = [];
 let filtroAtivo  = 'todos';
 let carroAtivo   = null;
 let fotoAtiva    = 0;
+let buscaTexto   = '';
+let paginaAtual  = 1;
+const POR_PAGINA = 12;
 
 function getEmoji(m) { return EMOJIS[m] || '🚗'; }
 
@@ -32,7 +25,9 @@ window.addEventListener('scroll', () => {
 });
 
 // ─── LISTENER FIREBASE ───────────────────────
-db.collection('carros').orderBy('criadoEm', 'desc').onSnapshot(snap => {
+const carrosQuery = query(collection(db, 'carros'), orderBy('criadoEm', 'desc'));
+
+onSnapshot(carrosQuery, snap => {
   todosCarros = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   renderGrid();
 }, err => {
@@ -50,6 +45,14 @@ document.getElementById('filtros').addEventListener('click', e => {
   document.querySelectorAll('.filtro').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   filtroAtivo = btn.dataset.filtro;
+  paginaAtual = 1;
+  renderGrid();
+});
+
+// ─── BUSCA ───────────────────────────────────
+document.getElementById('busca-estoque').addEventListener('input', e => {
+  buscaTexto = e.target.value.trim().toLowerCase();
+  paginaAtual = 1;
   renderGrid();
 });
 
@@ -59,18 +62,29 @@ function renderGrid() {
 
   let lista = todosCarros.filter(c => c.status !== 'vendido');
   if (filtroAtivo !== 'todos') lista = lista.filter(c => c.status === filtroAtivo);
+  if (buscaTexto) {
+    lista = lista.filter(c =>
+      `${c.marca} ${c.modelo} ${c.ano}`.toLowerCase().includes(buscaTexto)
+    );
+  }
 
   if (!lista.length) {
     grid.innerHTML = `<div class="estoque-vazio"><i class="ti ti-car-off"></i><p>Nenhum veículo encontrado.</p></div>`;
     document.getElementById('estoque-cta').style.display = 'none';
+    document.getElementById('paginacao').innerHTML = '';
     return;
   }
 
   document.getElementById('estoque-cta').style.display = 'block';
 
+  const totalPaginas = Math.max(1, Math.ceil(lista.length / POR_PAGINA));
+  if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+  const inicio = (paginaAtual - 1) * POR_PAGINA;
+  const paginaLista = lista.slice(inicio, inicio + POR_PAGINA);
+
   const statusLabel = { disponivel:'Disponível', reservado:'Reservado' };
 
-  grid.innerHTML = lista.map(c => {
+  grid.innerHTML = paginaLista.map(c => {
     const temFoto  = c.fotos && c.fotos.length > 0;
     const fotoSrc  = temFoto ? c.fotos[0] : null;
     const qtdFotos = c.fotos ? c.fotos.length : 0;
@@ -101,6 +115,29 @@ function renderGrid() {
         </div>
       </div>`;
   }).join('');
+
+  renderPaginacao(totalPaginas);
+}
+
+function renderPaginacao(totalPaginas) {
+  const el = document.getElementById('paginacao');
+  if (totalPaginas <= 1) { el.innerHTML = ''; return; }
+
+  const baseStyle   = 'min-width:36px;height:36px;border-radius:8px;border:1px solid #e4e4e7;background:#fff;cursor:pointer;font-family:inherit;font-size:13px';
+  const activeStyle = baseStyle + ';background:#18181b;color:#fff;border-color:#18181b';
+
+  let botoes = `<button style="${baseStyle}" ${paginaAtual===1?'disabled':''} onclick="irParaPagina(${paginaAtual-1})"><i class="ti ti-chevron-left"></i></button>`;
+  for (let i = 1; i <= totalPaginas; i++) {
+    botoes += `<button style="${i===paginaAtual?activeStyle:baseStyle}" onclick="irParaPagina(${i})">${i}</button>`;
+  }
+  botoes += `<button style="${baseStyle}" ${paginaAtual===totalPaginas?'disabled':''} onclick="irParaPagina(${paginaAtual+1})"><i class="ti ti-chevron-right"></i></button>`;
+  el.innerHTML = botoes;
+}
+
+function irParaPagina(p) {
+  paginaAtual = p;
+  renderGrid();
+  document.getElementById('estoque').scrollIntoView({ behavior:'smooth' });
 }
 
 // ─── MODAL E CARROSSEL ───────────────────────
@@ -122,7 +159,6 @@ function renderGaleria() {
   const fotos  = c.fotos && c.fotos.length ? c.fotos : [];
   const temFoto = fotos.length > 0;
 
-  // Foto principal
   const mgMain = document.getElementById('mg-main');
   if (temFoto) {
     mgMain.innerHTML = `<img src="${escUrl(fotos[fotoAtiva])}" alt="${esc(c.marca)} ${esc(c.modelo)}"/>`;
@@ -130,12 +166,10 @@ function renderGaleria() {
     mgMain.innerHTML = getEmoji(c.marca);
   }
 
-  // Contador
   document.getElementById('mg-counter').textContent = temFoto
     ? `${fotoAtiva + 1} / ${fotos.length}` : '';
   document.getElementById('mg-counter').style.display = temFoto ? 'block' : 'none';
 
-  // Setas
   const prev = document.getElementById('mg-prev');
   const next = document.getElementById('mg-next');
   if (!temFoto || fotos.length <= 1) {
@@ -146,7 +180,6 @@ function renderGaleria() {
     next.classList.toggle('hidden', fotoAtiva === fotos.length - 1);
   }
 
-  // Thumbnails
   const thumbs = document.getElementById('mg-thumbs');
   if (!temFoto || fotos.length <= 1) {
     thumbs.style.display = 'none';
@@ -173,7 +206,6 @@ function irParaFoto(i) {
   renderGaleria();
 }
 
-// Teclado (setas) no modal
 document.addEventListener('keydown', e => {
   if (!carroAtivo) return;
   if (e.key === 'ArrowLeft')  mudarFoto(-1);
@@ -216,3 +248,13 @@ function fecharModal(event, forcar) {
   document.body.style.overflow = '';
   carroAtivo = null;
 }
+
+// ─── EXPOSTAS AO HTML (onclick inline no index.html/modal) ───
+// Necessário porque módulos ES não jogam funções no escopo
+// global automaticamente. Isso é o que substitui o antigo
+// comportamento de script solto.
+window.abrirModal   = abrirModal;
+window.fecharModal  = fecharModal;
+window.mudarFoto    = mudarFoto;
+window.irParaFoto   = irParaFoto;
+window.irParaPagina = irParaPagina;

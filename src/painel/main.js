@@ -1,49 +1,24 @@
 // =============================================
 //  PAINEL AUTOPRIME v2
-//  app.js — com upload de fotos via Cloudinary
+//  main.js — com upload de fotos via Cloudinary
 // =============================================
-// ─── FIREBASE CONFIG ─────────────────────────
-const firebaseConfig = {
-  apiKey:            "AIzaSyDzJP-XF37RCedf_wN7svLg1YZ82u3ULF8",
-  authDomain:        "painelrevenda-2bc8b.firebaseapp.com",
-  projectId:         "painelrevenda-2bc8b",
-  storageBucket:     "painelrevenda-2bc8b.firebasestorage.app",
-  messagingSenderId: "57821691298",
-  appId:             "1:57821691298:web:04198c179330458a3ac6fb"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+import '../shared/auth-guard.js';
+import { db } from '../shared/firebase.js';
+import { esc, escAttr } from '../shared/seguranca.js';
+import { uploadFoto } from '../shared/cloudinary.js';
+import {
+  collection, doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc,
+  onSnapshot, query, orderBy, serverTimestamp
+} from 'firebase/firestore';
 
 // Coleções
-const colCarros     = db.collection('carros');
-const colFinanceiro = db.collection('financeiro');
-const colGastos     = db.collection('gastos');
-const colMetas      = db.collection('metas');
-const colVendedores = db.collection('vendedores');
-const colComissoes  = db.collection('comissoes');
-const colCRM        = db.collection('crm');
-
-// ─── CLOUDINARY CONFIG ───────────────────────
-const CLOUDINARY_CLOUD = 'x2xybz4b';
-const CLOUDINARY_PRESET = 'autoprime_upload'; // Unsigned preset (criamos abaixo)
-
-// Faz upload de uma foto pro Cloudinary e retorna a URL permanente
-async function uploadFoto(file) {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', CLOUDINARY_PRESET);
-  formData.append('folder', 'autoprime');
-
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`,
-    { method: 'POST', body: formData }
-  );
-
-  if (!res.ok) throw new Error('Erro no upload da foto');
-  const data = await res.json();
-  return data.secure_url; // URL permanente na nuvem
-}
+const colCarros     = collection(db, 'carros');
+const colFinanceiro = collection(db, 'financeiro');
+const colGastos     = collection(db, 'gastos');
+const colMetas      = collection(db, 'metas');
+const colVendedores = collection(db, 'vendedores');
+const colComissoes  = collection(db, 'comissoes');
+const colCRM        = collection(db, 'crm');
 
 // ─── CONSTANTES ──────────────────────────────
 const EMOJIS = { Volkswagen:'🚗',Fiat:'🚙',Toyota:'🚘',Chevrolet:'🚗',Hyundai:'🚗',Jeep:'🚙',Honda:'🚗',Renault:'🚗',Ford:'🚗',Nissan:'🚗',Mitsubishi:'🚙',Kia:'🚗' };
@@ -63,8 +38,8 @@ let gastos      = [];
 let vendedores  = [];
 let comissoes   = [];
 let leads       = [];
-let fotosParaUpload = []; // arquivos File aguardando upload
-let fotoUrls    = []; // previews locais
+let fotosParaUpload = [];
+let fotoUrls    = [];
 let tipoAtivo   = 'receita';
 let custoCarroAtivo = null;
 let crmFiltro   = 'todos';
@@ -81,8 +56,6 @@ function fmtCampo(el) {
 }
 
 function parseMoeda(s) { return parseInt((s||'0').replace(/\D/g,''),10)||0; }
-
-function fmt2(n) { return 'R$ ' + Math.round(n).toLocaleString('pt-BR'); }
 
 function mesLabel(ym) {
   const [y,m] = ym.split('-');
@@ -132,7 +105,7 @@ function setData() {
 // =============================================
 
 function iniciarListenerCarros() {
-  colCarros.orderBy('criadoEm','desc').onSnapshot(snap => {
+  onSnapshot(query(colCarros, orderBy('criadoEm','desc')), snap => {
     carros = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderEstoque();
     setStatus(true);
@@ -155,7 +128,7 @@ function renderEstoque() {
   list.innerHTML = carros.map(c=>`
     <div class="car-list-item">
       <div class="car-emoji">${c.fotos&&c.fotos[0]
-        ? `<img src="${escUrl(c.fotos[0])}" style="width:48px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">`
+        ? `<img src="${escAttr(c.fotos[0])}" style="width:48px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">`
         : getEmoji(c.marca)}</div>
       <div class="car-info">
         <div class="car-nome">${esc(c.marca)} ${esc(c.modelo)} · ${esc(c.ano)}</div>
@@ -173,27 +146,23 @@ function renderEstoque() {
 async function alterarStatus(id, atual) {
   const ciclo  = ['disponivel','reservado','vendido'];
   const novo   = ciclo[(ciclo.indexOf(atual)+1)%3];
-  try { await colCarros.doc(id).update({status:novo}); toast('Situação: '+novo); }
+  try { await updateDoc(doc(db,'carros',id), {status:novo}); toast('Situação: '+novo); }
   catch(e) { toast('Erro ao atualizar','erro'); }
 }
 
 async function excluirCarro(id) {
   if (!confirm('Remover este veículo do estoque?')) return;
-  try { await colCarros.doc(id).delete(); toast('Veículo removido'); }
+  try { await deleteDoc(doc(db,'carros',id)); toast('Veículo removido'); }
   catch(e) { toast('Erro ao remover','erro'); }
 }
 
 // =============================================
 //  MÓDULO 2 — ADICIONAR CARRO (com Cloudinary)
 // =============================================
-
 document.getElementById('file-input').addEventListener('change', function() {
   const preview = document.getElementById('fotos-preview');
   Array.from(this.files).forEach(file => {
-    // Guarda o arquivo para upload posterior
     fotosParaUpload.push(file);
-
-    // Preview local enquanto não sobe
     const url = URL.createObjectURL(file);
     fotoUrls.push(url);
 
@@ -207,7 +176,7 @@ document.getElementById('file-input').addEventListener('change', function() {
     };
     wrap.appendChild(img); wrap.appendChild(del); preview.appendChild(wrap);
   });
-  this.value = ''; // permite selecionar o mesmo arquivo novamente
+  this.value = '';
 });
 
 async function salvarCarro() {
@@ -222,7 +191,6 @@ async function salvarCarro() {
   btnSalvar.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Salvando fotos...';
 
   try {
-    // Faz upload de todas as fotos pro Cloudinary
     let urlsNuvem = [];
     if (fotosParaUpload.length > 0) {
       toast('Enviando ' + fotosParaUpload.length + ' foto(s)...');
@@ -241,22 +209,20 @@ async function salvarCarro() {
       preco, custo,
       troca: document.getElementById('f-troca').value,
       status:document.querySelector('input[name="status"]:checked').value,
-      fotos: urlsNuvem, // URLs permanentes do Cloudinary
-      criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      fotos: urlsNuvem,
+      criadoEm: serverTimestamp(),
     };
 
-    const ref = await colCarros.add(carro);
+    const ref = await addDoc(colCarros, carro);
 
-    // Lança custo de aquisição no financeiro automaticamente
     if (custo > 0) {
-      await colFinanceiro.add({
+      await addDoc(colFinanceiro, {
         tipo:'despesa', desc:`Compra ${marca} ${modelo} ${ano}`,
         cat:'Compra de veículo', val:custo, data:hojeISO(),
         carroId: ref.id,
-        criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+        criadoEm: serverTimestamp()
       });
     }
-
     toast('Veículo salvo! Site já atualizado.');
     limparCarro();
     showPane('estoque');
@@ -285,7 +251,7 @@ function limparCarro() {
 // =============================================
 
 function iniciarListenerGastos() {
-  colGastos.orderBy('criadoEm','desc').onSnapshot(snap=>{
+  onSnapshot(query(colGastos, orderBy('criadoEm','desc')), snap=>{
     gastos = snap.docs.map(d=>({id:d.id,...d.data()}));
   });
 }
@@ -372,8 +338,8 @@ async function salvarGasto() {
   const nomeC = carro ? `${carro.marca} ${carro.modelo} ${carro.ano}` : 'Veículo';
 
   try {
-    await colGastos.add({ carroId:custoCarroAtivo, tipo, desc:desc||tipo, val, criadoEm:firebase.firestore.FieldValue.serverTimestamp() });
-    await colFinanceiro.add({ tipo:'despesa', desc:`${tipo} — ${nomeC}`, cat:'Manutenção veículo', val, data:hojeISO(), carroId:custoCarroAtivo, criadoEm:firebase.firestore.FieldValue.serverTimestamp() });
+    await addDoc(colGastos, { carroId:custoCarroAtivo, tipo, desc:desc||tipo, val, criadoEm:serverTimestamp() });
+    await addDoc(colFinanceiro, { tipo:'despesa', desc:`${tipo} — ${nomeC}`, cat:'Manutenção veículo', val, data:hojeISO(), carroId:custoCarroAtivo, criadoEm:serverTimestamp() });
     toast('Gasto salvo e lançado no financeiro!');
     fecharCustoForm();
     renderCustos();
@@ -382,7 +348,7 @@ async function salvarGasto() {
 
 async function removerGasto(id) {
   if (!confirm('Remover este gasto?')) return;
-  try { await colGastos.doc(id).delete(); renderCustos(); toast('Gasto removido'); }
+  try { await deleteDoc(doc(db,'gastos',id)); renderCustos(); toast('Gasto removido'); }
   catch(e) { toast('Erro','erro'); }
 }
 
@@ -391,7 +357,7 @@ async function removerGasto(id) {
 // =============================================
 
 function iniciarListenerFinanceiro() {
-  colFinanceiro.orderBy('data','desc').onSnapshot(snap=>{
+  onSnapshot(query(colFinanceiro, orderBy('data','desc')), snap=>{
     lancamentos = snap.docs.map(d=>({id:d.id,...d.data()}));
     populaMeses();
     renderFinanceiro();
@@ -472,7 +438,7 @@ async function adicionarLanc() {
   const data = document.getElementById('fin-data').value || hojeISO();
   if (!desc||!val) { toast('Preencha descrição e valor','erro'); return; }
   try {
-    await colFinanceiro.add({tipo:tipoAtivo,desc,cat,val,data,criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+    await addDoc(colFinanceiro, {tipo:tipoAtivo,desc,cat,val,data,criadoEm:serverTimestamp()});
     document.getElementById('fin-desc').value='';
     document.getElementById('fin-val').value='';
     toast(tipoAtivo==='receita'?'Receita adicionada!':'Despesa registrada!');
@@ -481,7 +447,7 @@ async function adicionarLanc() {
 
 async function removerLanc(id) {
   if (!confirm('Remover este lançamento?')) return;
-  try { await colFinanceiro.doc(id).delete(); toast('Removido'); }
+  try { await deleteDoc(doc(db,'financeiro',id)); toast('Removido'); }
   catch(e) { toast('Erro','erro'); }
 }
 
@@ -495,7 +461,7 @@ async function salvarMeta() {
   const mes      = document.getElementById('meta-mes').value;
   if (!mes||!valor) { toast('Preencha meta e mês','erro'); return; }
   try {
-    await colMetas.doc(mes).set({valor,unidades,mes,criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+    await setDoc(doc(db,'metas',mes), {valor,unidades,mes,criadoEm:serverTimestamp()});
     toast('Meta salva!'); renderMeta();
   } catch(e) { toast('Erro','erro'); }
 }
@@ -504,9 +470,9 @@ async function renderMeta() {
   const mes = document.getElementById('meta-mes').value;
   if (!mes) return;
   try {
-    const doc = await colMetas.doc(mes).get();
-    if (!doc.exists) { document.getElementById('meta-progress').innerHTML=''; return; }
-    const meta = doc.data();
+    const snap = await getDoc(doc(db,'metas',mes));
+    if (!snap.exists()) { document.getElementById('meta-progress').innerHTML=''; return; }
+    const meta = snap.data();
     const recMes  = lancamentos.filter(l=>l.tipo==='receita'&&l.data.startsWith(mes)).reduce((s,l)=>s+l.val,0);
     const vendMes = carros.filter(c=>c.status==='vendido').length;
     const pctFat  = meta.valor>0 ? Math.min(Math.round(recMes/meta.valor*100),100) : 0;
@@ -537,7 +503,7 @@ async function salvarVendedor() {
   const comissao = parseFloat(document.getElementById('vend-comissao').value)||0;
   if (!nome) { toast('Informe o nome do vendedor','erro'); return; }
   try {
-    await colVendedores.add({nome,comissao,criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+    await addDoc(colVendedores, {nome,comissao,criadoEm:serverTimestamp()});
     document.getElementById('vend-nome').value='';
     document.getElementById('vend-comissao').value='';
     toast('Vendedor cadastrado!'); renderVendedores();
@@ -545,7 +511,7 @@ async function salvarVendedor() {
 }
 
 function iniciarListenerVendedores() {
-  colVendedores.orderBy('nome').onSnapshot(snap=>{
+  onSnapshot(query(colVendedores, orderBy('nome')), snap=>{
     vendedores = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderVendedores();
     const sel = document.getElementById('vend-sel');
@@ -567,7 +533,7 @@ function renderVendedores() {
 
 async function removerVendedor(id) {
   if (!confirm('Remover vendedor?')) return;
-  try { await colVendedores.doc(id).delete(); toast('Removido'); }
+  try { await deleteDoc(doc(db,'vendedores',id)); toast('Removido'); }
   catch(e) { toast('Erro','erro'); }
 }
 
@@ -579,8 +545,8 @@ async function lancarComissao() {
   if (!vend) return;
   const comissaoVal = Math.round(venda*(vend.comissao/100));
   try {
-    await colComissoes.add({ vendedorId:vendId, vendedorNome:vend.nome, venda, comissaoVal, comissaoPct:vend.comissao, data:hojeISO(), criadoEm:firebase.firestore.FieldValue.serverTimestamp() });
-    await colFinanceiro.add({ tipo:'despesa', desc:`Comissão ${vend.nome}`, cat:'Salário / Comissão', val:comissaoVal, data:hojeISO(), criadoEm:firebase.firestore.FieldValue.serverTimestamp() });
+    await addDoc(colComissoes, { vendedorId:vendId, vendedorNome:vend.nome, venda, comissaoVal, comissaoPct:vend.comissao, data:hojeISO(), criadoEm:serverTimestamp() });
+    await addDoc(colFinanceiro, { tipo:'despesa', desc:`Comissão ${vend.nome}`, cat:'Salário / Comissão', val:comissaoVal, data:hojeISO(), criadoEm:serverTimestamp() });
     document.getElementById('vend-val-venda').value='';
     toast(`Comissão de ${fmt(comissaoVal)} lançada para ${vend.nome}!`);
     renderComissoes();
@@ -588,7 +554,7 @@ async function lancarComissao() {
 }
 
 function iniciarListenerComissoes() {
-  colComissoes.orderBy('criadoEm','desc').onSnapshot(snap=>{
+  onSnapshot(query(colComissoes, orderBy('criadoEm','desc')), snap=>{
     comissoes = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderComissoes();
   });
@@ -610,7 +576,7 @@ function renderComissoes() {
 
 async function removerComissao(id) {
   if (!confirm('Remover comissão?')) return;
-  try { await colComissoes.doc(id).delete(); toast('Removido'); }
+  try { await deleteDoc(doc(db,'comissoes',id)); toast('Removido'); }
   catch(e) { toast('Erro','erro'); }
 }
 
@@ -619,7 +585,7 @@ async function removerComissao(id) {
 // =============================================
 
 function iniciarListenerCRM() {
-  colCRM.orderBy('criadoEm','desc').onSnapshot(snap=>{
+  onSnapshot(query(colCRM, orderBy('criadoEm','desc')), snap=>{
     leads = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderCRM();
   });
@@ -633,20 +599,20 @@ async function salvarLead() {
   const obs       = document.getElementById('crm-obs').value.trim();
   if (!nome) { toast('Informe o nome do cliente','erro'); return; }
   try {
-    await colCRM.add({nome,wpp,interesse,origem,obs,status:'novo',criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+    await addDoc(colCRM, {nome,wpp,interesse,origem,obs,status:'novo',criadoEm:serverTimestamp()});
     ['crm-nome','crm-wpp','crm-interesse','crm-obs'].forEach(id=>{ document.getElementById(id).value=''; });
     toast('Lead adicionado!');
   } catch(e) { toast('Erro','erro'); }
 }
 
 async function atualizarStatusLead(id, status) {
-  try { await colCRM.doc(id).update({status}); toast('Status atualizado'); }
+  try { await updateDoc(doc(db,'crm',id), {status}); toast('Status atualizado'); }
   catch(e) { toast('Erro','erro'); }
 }
 
 async function removerLead(id) {
   if (!confirm('Remover este lead?')) return;
-  try { await colCRM.doc(id).delete(); toast('Lead removido'); }
+  try { await deleteDoc(doc(db,'crm',id)); toast('Lead removido'); }
   catch(e) { toast('Erro','erro'); }
 }
 
@@ -690,10 +656,22 @@ document.querySelectorAll('.crm-filtro').forEach(btn=>{
   });
 });
 
+// ─── EXPOSTAS AO HTML (onclick inline no painel/index.html) ───
+// Módulos ES não jogam funções pro escopo global; como as
+// telas ainda usam onclick="..." no HTML, expomos aqui.
+// (Migrar pra addEventListener é uma limpeza futura opcional.)
+Object.assign(window, {
+  showPane, salvarCarro, limparCarro,
+  alterarStatus, excluirCarro,
+  toggleCustoItem, abrirCustoForm, fecharCustoForm, salvarGasto, removerGasto,
+  setTipo, adicionarLanc, removerLanc, fmtCampo,
+  salvarMeta, salvarVendedor, removerVendedor, lancarComissao, removerComissao,
+  salvarLead, atualizarStatusLead, removerLead,
+});
+
 // =============================================
 //  INICIALIZAÇÃO
 // =============================================
-
 setData();
 document.getElementById('fin-data').value  = hojeISO();
 document.getElementById('meta-mes').value  = hojeISO().slice(0,7);

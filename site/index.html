@@ -64,9 +64,7 @@
       <span>Test drive sem compromisso</span><span class="dot">·</span>
       <span>Atendimento de quem entende</span><span class="dot">·</span>
     </div>
-  </div>
-
-  <!-- ESTOQUE -->
+  </div> <!-- ESTOQUE -->
   <section class="section-estoque" id="estoque">
     <div class="container">
       <div class="section-label">Estoque atual</div>
@@ -78,12 +76,17 @@
           <button class="filtro" data-filtro="reservado">Reservados</button>
         </div>
       </div>
+      <div class="busca-wrap" style="margin-bottom:20px">
+        <input type="text" id="busca-estoque" placeholder="Buscar por marca, modelo ou ano..."
+          style="width:100%;max-width:420px;padding:11px 16px;border-radius:8px;border:1px solid #e4e4e7;font-family:inherit;font-size:14px;outline:none"/>
+      </div>
       <div class="car-grid" id="car-grid">
         <div class="grid-loading">
           <div class="spinner"></div>
           <p>Carregando estoque...</p>
         </div>
       </div>
+      <div class="paginacao" id="paginacao" style="display:flex;gap:8px;justify-content:center;margin-top:24px"></div>
       <div class="estoque-cta" id="estoque-cta" style="display:none">
         <a href="https://wa.me/5554999999999" target="_blank" class="btn-outline-dark">
           <i class="ti ti-brand-whatsapp"></i> Não achou o que procura? Fale conosco
@@ -103,8 +106,7 @@
           <div class="diff-num">01</div>
           <h3>Curadoria de verdade</h3>
           <p>Não enchemos o pátio por encher. Selecionamos carros que nós mesmos compraríamos.</p>
-        </div>
-        <div class="diff-item">
+        </div><div class="diff-item">
           <div class="diff-num">02</div>
           <h3>Transparência total</h3>
           <p>Você sabe exatamente o que está levando. Histórico, estado e documentação na mesa.</p>
@@ -154,9 +156,7 @@
         </div>
       </div>
     </div>
-  </section>
-
-  <!-- CTA FINAL -->
+  </section><!-- CTA FINAL -->
   <section class="section-cta" id="contato">
     <div class="container cta-inner">
       <div class="section-label">Vamos conversar</div>
@@ -195,8 +195,7 @@
       </div>
     </div>
   </section>
-
-  <!-- FOOTER -->
+<!-- FOOTER -->
   <footer class="footer">
     <div class="container footer-inner">
       <div class="footer-logo">AUTO<span>PRIME</span></div>
@@ -232,9 +231,6 @@
     <i class="ti ti-brand-whatsapp"></i>
   </a>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="seguranca.js"></script>
-  <script src="app.js"></script>
+  <script type="module" src="/src/site/main.js"></script>
 </body>
 </html>

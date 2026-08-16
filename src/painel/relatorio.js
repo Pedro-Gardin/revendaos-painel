@@ -1,24 +1,11 @@
 // =============================================
 //  RELATÓRIO MENSAL — AutoPrime
-//  relatorio.js — lendo do Firebase Firestore
+//  relatorio.js — Firebase modular
 // =============================================
-
-const firebaseConfig = {
-  apiKey:            "AIzaSyDzJP-XF37RCedf_wN7svLg1YZ82u3ULF8",
-  authDomain:        "painelrevenda-2bc8b.firebaseapp.com",
-  projectId:         "painelrevenda-2bc8b",
-  storageBucket:     "painelrevenda-2bc8b.firebasestorage.app",
-  messagingSenderId: "57821691298",
-  appId:             "1:57821691298:web:04198c179330458a3ac6fb"
-};
-
-// Inicializa só se ainda não foi inicializado
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
-
-const db   = firebase.firestore();
-const auth = firebase.auth();
+import { db, auth } from '../shared/firebase.js';
+import { esc, escAttr } from '../shared/seguranca.js';
+import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 // ─── ESTADO ──────────────────────────────────
 let lancamentos = [];
@@ -42,7 +29,7 @@ function mesExtenso(yyyymm) {
 }
 
 // ─── VERIFICA LOGIN ──────────────────────────
-auth.onAuthStateChanged(user => {
+onAuthStateChanged(auth, user => {
   if (!user) {
     window.location.href = 'login.html';
   } else {
@@ -53,15 +40,12 @@ auth.onAuthStateChanged(user => {
 // ─── CARREGA DADOS DO FIREBASE ───────────────
 async function carregarDados() {
   try {
-    // Carrega financeiro
-    const finSnap = await db.collection('financeiro').orderBy('data', 'desc').get();
+    const finSnap = await getDocs(query(collection(db, 'financeiro'), orderBy('data', 'desc')));
     lancamentos = finSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // Carrega carros
-    const carSnap = await db.collection('carros').orderBy('criadoEm', 'desc').get();
+    const carSnap = await getDocs(query(collection(db, 'carros'), orderBy('criadoEm', 'desc')));
     carros = carSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // Popula o seletor de meses e renderiza
     populaMeses();
     renderRelatorio();
   } catch(e) {
@@ -95,7 +79,6 @@ function renderRelatorio() {
   const lucro  = totRec - totDes;
   const mar    = totRec > 0 ? Math.round((lucro / totRec) * 100) : 0;
 
-  // Período e cards
   document.getElementById('rel-periodo').textContent = mesExtenso(mes);
   document.getElementById('r-rec').textContent = fmt(totRec);
   document.getElementById('r-des').textContent = fmt(totDes);
@@ -106,26 +89,11 @@ function renderRelatorio() {
 
   document.getElementById('r-mar').textContent = mar + '%';
 
-  // Veículos vendidos
-  const vendidos   = carros.filter(c => c.status === 'vendido');
-  const tabVendas  = document.getElementById('tab-vendas');
-
-  if (!vendidos.length) {
-    tabVendas.innerHTML = `
-      <tr>
-        <td colspan="4" style="color:var(--muted);padding:14px 8px;text-align:center;font-style:italic">
-          Nenhum veículo com status "Vendido" no estoque
-        </td>
-      </tr>`;
-  } else {
-    tabVendas.innerHTML = vendidos.map(c => `
-      <tr>
-        <td><strong>${esc(c.marca)} ${esc(c.modelo)}</strong></td>
-        <td>${esc(c.ano)}</td>
-        <td>${esc(c.cor || '—')}</td>
-        <td class="td-r green"><strong>${esc(c.preco)}</strong></td>
-      </tr>`).join('');
-  }
+  // Seção "Veículos vendidos no período" removida: a tabela de
+  // Receitas abaixo já mostra cada venda (categoria "Venda de
+  // veículo" + descrição), e não dá pra casar com precisão o
+  // carro específico sem um vínculo carroId salvo no lançamento
+  // manual do financeiro.
 
   // Receitas
   const tabRec = document.getElementById('tab-rec');
@@ -171,6 +139,8 @@ function renderRelatorio() {
   document.getElementById('resultado-mar').textContent = mar + '%';
   document.getElementById('resultado-mar').style.color = corRes;
 }
+
+window.renderRelatorio = renderRelatorio;
 
 // ─── INICIALIZAÇÃO ────────────────────────────
 const hoje = new Date();

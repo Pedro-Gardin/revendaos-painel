@@ -2,10 +2,14 @@
 //  seguranca.js — Proteção contra XSS
 //  Use esc() em qualquer dado que vem do usuário
 //  ou do banco antes de colocar no innerHTML.
+//
+//  Agora é um módulo ES: quem precisa, importa.
+//  Isso elimina o bug de path relativo/404 que
+//  quebrava o site quando o arquivo não carregava.
 // =============================================
 
 /** Escapa texto para uso seguro dentro de HTML */
-function esc(str) {
+export function esc(str) {
   if (str == null) return '';
   return String(str)
     .replace(/&/g, '&amp;')
@@ -16,12 +20,12 @@ function esc(str) {
 }
 
 /** Escapa valor para atributos HTML (onclick, value, etc.) */
-function escAttr(str) {
+export function escAttr(str) {
   return esc(str);
 }
 
 /** Permite só URLs http/https em src/href */
-function escUrl(url) {
+export function escUrl(url) {
   if (!url) return '';
   const s = String(url).trim();
   return /^https?:\/\//i.test(s) ? esc(s) : '';
