@@ -6,19 +6,16 @@ import '../shared/auth-guard.js';
 import { db } from '../shared/firebase.js';
 import { esc, escAttr } from '../shared/seguranca.js';
 import { uploadFoto } from '../shared/cloudinary.js';
+import { getOrgContext, orgCollection, orgDoc, podeEditar } from '../shared/tenant.js';
 import {
-  collection, doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc,
+  doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc,
   onSnapshot, query, orderBy, serverTimestamp
 } from 'firebase/firestore';
 
-// Coleções
-const colCarros     = collection(db, 'carros');
-const colFinanceiro = collection(db, 'financeiro');
-const colGastos     = collection(db, 'gastos');
-const colMetas      = collection(db, 'metas');
-const colVendedores = collection(db, 'vendedores');
-const colComissoes  = collection(db, 'comissoes');
-const colCRM        = collection(db, 'crm');
+// Coleções — resolvidas em runtime, escopadas pra organization
+// do usuário logado (definidas em initTenant(), lá no final do arquivo)
+let colCarros, colFinanceiro, colGastos, colMetas, colVendedores, colComissoes, colCRM;
+let orgCtx = null; // { orgId, orgSlug, orgNome, role, uid }
 
 // ─── CONSTANTES ──────────────────────────────
 const EMOJIS = { Volkswagen:'🚗',Fiat:'🚙',Toyota:'🚘',Chevrolet:'🚗',Hyundai:'🚗',Jeep:'🚙',Honda:'🚗',Renault:'🚗',Ford:'🚗',Nissan:'🚗',Mitsubishi:'🚙',Kia:'🚗' };
@@ -43,6 +40,11 @@ let fotoUrls    = [];
 let tipoAtivo   = 'receita';
 let custoCarroAtivo = null;
 let crmFiltro   = 'todos';
+let estoqueBusca    = '';
+let estoquePagina   = 1;
+const ESTOQUE_POR_PAGINA = 12;
+let carroEditando   = null;  // id do carro em edição (null = modo "adicionar")
+let fotosExistentes = [];    // URLs já salvas do carro em edição
 
 // ─── UTILITÁRIOS ─────────────────────────────
 function getEmoji(m)  { return EMOJIS[m] || '🚗'; }
@@ -105,11 +107,15 @@ function setData() {
 // =============================================
 
 function iniciarListenerCarros() {
+  console.log('[DIAGNÓSTICO] colCarros path:', colCarros?.path);
   onSnapshot(query(colCarros, orderBy('criadoEm','desc')), snap => {
     carros = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderEstoque();
     setStatus(true);
-  }, ()=>setStatus(false));
+  }, (erro) => {
+    console.error('[DIAGNÓSTICO] Erro completo no listener de carros:', erro.code, erro.message);
+    setStatus(false);
+  });
 }
 
 function renderEstoque() {
@@ -121,11 +127,32 @@ function renderEstoque() {
   const list = document.getElementById('car-list');
   if (!carros.length) {
     list.innerHTML = `<div class="empty-state"><i class="ti ti-car-off"></i><p>Nenhum veículo cadastrado.<br>Clique em <strong>Adicionar Veículo</strong> para começar.</p></div>`;
+    const pagEl = document.getElementById('estoque-paginacao');
+    if (pagEl) pagEl.innerHTML = '';
     return;
   }
 
+  let filtrados = carros;
+  if (estoqueBusca) {
+    filtrados = filtrados.filter(c =>
+      `${c.marca} ${c.modelo} ${c.ano}`.toLowerCase().includes(estoqueBusca)
+    );
+  }
+
+  if (!filtrados.length) {
+    list.innerHTML = `<div class="empty-state"><i class="ti ti-search-off"></i><p>Nenhum veículo encontrado pra essa busca.</p></div>`;
+    const pagEl = document.getElementById('estoque-paginacao');
+    if (pagEl) pagEl.innerHTML = '';
+    return;
+  }
+
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / ESTOQUE_POR_PAGINA));
+  if (estoquePagina > totalPaginas) estoquePagina = totalPaginas;
+  const inicio = (estoquePagina - 1) * ESTOQUE_POR_PAGINA;
+  const pagina = filtrados.slice(inicio, inicio + ESTOQUE_POR_PAGINA);
+
   const labels = {disponivel:'Disponível',reservado:'Reservado',vendido:'Vendido'};
-  list.innerHTML = carros.map(c=>`
+  list.innerHTML = pagina.map(c=>`
     <div class="car-list-item">
       <div class="car-emoji">${c.fotos&&c.fotos[0]
         ? `<img src="${escAttr(c.fotos[0])}" style="width:48px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">`
@@ -137,22 +164,52 @@ function renderEstoque() {
       <div class="car-preco">${esc(c.preco)}</div>
       <div class="car-badge badge-${escAttr(c.status)}">${esc(labels[c.status]||c.status)}</div>
       <div class="car-actions">
+        <button class="btn-icon" onclick="abrirEdicao('${escAttr(c.id)}')" title="Editar"><i class="ti ti-pencil"></i></button>
         <button class="btn-icon" onclick="alterarStatus('${escAttr(c.id)}','${escAttr(c.status)}')" title="Mudar situação"><i class="ti ti-refresh"></i></button>
         <button class="btn-icon del" onclick="excluirCarro('${escAttr(c.id)}')" title="Excluir"><i class="ti ti-trash"></i></button>
       </div>
     </div>`).join('');
+
+  renderEstoquePaginacao(totalPaginas);
+}
+
+function renderEstoquePaginacao(totalPaginas) {
+  const el = document.getElementById('estoque-paginacao');
+  if (!el) return;
+  if (totalPaginas <= 1) { el.innerHTML = ''; return; }
+
+  const baseStyle   = 'min-width:32px;height:32px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--txt);cursor:pointer;font-size:12px';
+  const activeStyle = baseStyle + ';background:var(--txt);color:var(--dark)';
+
+  let botoes = `<button style="${baseStyle}" ${estoquePagina===1?'disabled':''} onclick="irParaPaginaEstoque(${estoquePagina-1})"><i class="ti ti-chevron-left"></i></button>`;
+  for (let i = 1; i <= totalPaginas; i++) {
+    botoes += `<button style="${i===estoquePagina?activeStyle:baseStyle}" onclick="irParaPaginaEstoque(${i})">${i}</button>`;
+  }
+  botoes += `<button style="${baseStyle}" ${estoquePagina===totalPaginas?'disabled':''} onclick="irParaPaginaEstoque(${estoquePagina+1})"><i class="ti ti-chevron-right"></i></button>`;
+  el.innerHTML = `<div style="display:flex;gap:6px;justify-content:center;margin-top:16px">${botoes}</div>`;
+}
+
+function irParaPaginaEstoque(p) {
+  estoquePagina = p;
+  renderEstoque();
+}
+
+function buscarEstoque(valor) {
+  estoqueBusca = valor.trim().toLowerCase();
+  estoquePagina = 1;
+  renderEstoque();
 }
 
 async function alterarStatus(id, atual) {
   const ciclo  = ['disponivel','reservado','vendido'];
   const novo   = ciclo[(ciclo.indexOf(atual)+1)%3];
-  try { await updateDoc(doc(db,'carros',id), {status:novo}); toast('Situação: '+novo); }
+  try { await updateDoc((await orgDoc('carros',id)), {status:novo}); toast('Situação: '+novo); }
   catch(e) { toast('Erro ao atualizar','erro'); }
 }
 
 async function excluirCarro(id) {
   if (!confirm('Remover este veículo do estoque?')) return;
-  try { await deleteDoc(doc(db,'carros',id)); toast('Veículo removido'); }
+  try { await deleteDoc((await orgDoc('carros',id))); toast('Veículo removido'); }
   catch(e) { toast('Erro ao remover','erro'); }
 }
 
@@ -186,16 +243,20 @@ async function salvarCarro() {
   const preco  = document.getElementById('f-preco').value.trim();
   if (!marca||!modelo||!ano||!preco) { toast('Preencha: marca, modelo, ano e preço','erro'); return; }
 
+  const editando  = !!carroEditando;
   const btnSalvar = document.querySelector('[onclick="salvarCarro()"]');
   btnSalvar.disabled = true;
   btnSalvar.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Salvando fotos...';
 
   try {
-    let urlsNuvem = [];
+    let urlsNovas = [];
     if (fotosParaUpload.length > 0) {
       toast('Enviando ' + fotosParaUpload.length + ' foto(s)...');
-      urlsNuvem = await Promise.all(fotosParaUpload.map(f => uploadFoto(f)));
+      urlsNovas = await Promise.all(fotosParaUpload.map(f => uploadFoto(f)));
     }
+    // Na edição: fotos existentes que não foram removidas + fotos novas.
+    // Na criação: só as novas mesmo.
+    const fotosFinal = editando ? [...fotosExistentes, ...urlsNovas] : urlsNovas;
 
     const custo = parseMoeda(document.getElementById('f-custo').value);
 
@@ -209,29 +270,89 @@ async function salvarCarro() {
       preco, custo,
       troca: document.getElementById('f-troca').value,
       status:document.querySelector('input[name="status"]:checked').value,
-      fotos: urlsNuvem,
-      criadoEm: serverTimestamp(),
+      fotos: fotosFinal,
     };
 
-    const ref = await addDoc(colCarros, carro);
+    if (editando) {
+      await updateDoc((await orgDoc('carros',carroEditando)), carro);
+      toast('Veículo atualizado!');
+    } else {
+      carro.criadoEm = serverTimestamp();
+      const ref = await addDoc(colCarros, carro);
 
-    if (custo > 0) {
-      await addDoc(colFinanceiro, {
-        tipo:'despesa', desc:`Compra ${marca} ${modelo} ${ano}`,
-        cat:'Compra de veículo', val:custo, data:hojeISO(),
-        carroId: ref.id,
-        criadoEm: serverTimestamp()
-      });
+      // Lança custo de aquisição só na criação — editar não deve
+      // duplicar esse lançamento no financeiro toda vez que salvar.
+      if (custo > 0) {
+        await addDoc(colFinanceiro, {
+          tipo:'despesa', desc:`Compra ${marca} ${modelo} ${ano}`,
+          cat:'Compra de veículo', val:custo, data:hojeISO(),
+          carroId: ref.id,
+          criadoEm: serverTimestamp()
+        });
+      }
+      toast('Veículo salvo! Site já atualizado.');
     }
-    toast('Veículo salvo! Site já atualizado.');
+
     limparCarro();
     showPane('estoque');
   } catch(e) {
     toast('Erro: ' + e.message, 'erro');
   } finally {
     btnSalvar.disabled = false;
-    btnSalvar.innerHTML = '<i class="ti ti-device-floppy"></i> Salvar veículo';
+    btnSalvar.innerHTML = carroEditando
+      ? '<i class="ti ti-device-floppy"></i> Salvar alterações'
+      : '<i class="ti ti-device-floppy"></i> Salvar veículo';
   }
+}
+
+// Abre o formulário de "Adicionar Veículo" já preenchido pra editar
+function abrirEdicao(id) {
+  const c = carros.find(x => x.id === id);
+  if (!c) return;
+
+  carroEditando   = id;
+  fotosExistentes = c.fotos ? [...c.fotos] : [];
+  fotosParaUpload = [];
+  fotoUrls        = [];
+
+  document.getElementById('f-marca').value    = c.marca || '';
+  document.getElementById('f-modelo').value   = c.modelo || '';
+  document.getElementById('f-ano').value      = c.ano || '';
+  document.getElementById('f-km').value       = c.km || '';
+  document.getElementById('f-cor').value      = c.cor || '';
+  document.getElementById('f-desc-car').value = c.desc || '';
+  document.getElementById('f-preco').value    = c.preco || '';
+  document.getElementById('f-custo').value    = c.custo ? fmt(c.custo) : '';
+  document.getElementById('f-comb').value     = c.comb || '';
+  document.getElementById('f-cambio').value   = c.cambio || '';
+  document.getElementById('f-troca').value    = c.troca || '';
+
+  const statusInput = document.querySelector(`input[name="status"][value="${c.status}"]`);
+  if (statusInput) statusInput.checked = true;
+
+  renderPreviewFotosExistentes();
+
+  const btnSalvar = document.querySelector('[onclick="salvarCarro()"]');
+  if (btnSalvar) btnSalvar.innerHTML = '<i class="ti ti-device-floppy"></i> Salvar alterações';
+
+  showPane('adicionar');
+}
+
+// Mostra as fotos já salvas no Cloudinary, com opção de remover
+// (só remove da lista local — o upload novo acontece ao salvar)
+function renderPreviewFotosExistentes() {
+  const preview = document.getElementById('fotos-preview');
+  preview.innerHTML = '';
+  fotosExistentes.forEach((url, i) => {
+    const wrap = document.createElement('div'); wrap.className='foto-thumb-wrap';
+    const img  = document.createElement('img');  img.src=url; img.className='foto-thumb'; img.alt='Foto';
+    const del  = document.createElement('button'); del.className='foto-del'; del.textContent='×';
+    del.onclick = () => {
+      fotosExistentes.splice(fotosExistentes.indexOf(url),1);
+      wrap.remove();
+    };
+    wrap.appendChild(img); wrap.appendChild(del); preview.appendChild(wrap);
+  });
 }
 
 function limparCarro() {
@@ -244,6 +365,10 @@ function limparCarro() {
   document.getElementById('fotos-preview').innerHTML='';
   fotoUrls=[];
   fotosParaUpload=[];
+  fotosExistentes=[];
+  carroEditando=null;
+  const btnSalvar = document.querySelector('[onclick="salvarCarro()"]');
+  if (btnSalvar) btnSalvar.innerHTML = '<i class="ti ti-device-floppy"></i> Salvar veículo';
 }
 
 // =============================================
@@ -348,7 +473,7 @@ async function salvarGasto() {
 
 async function removerGasto(id) {
   if (!confirm('Remover este gasto?')) return;
-  try { await deleteDoc(doc(db,'gastos',id)); renderCustos(); toast('Gasto removido'); }
+  try { await deleteDoc((await orgDoc('gastos',id))); renderCustos(); toast('Gasto removido'); }
   catch(e) { toast('Erro','erro'); }
 }
 
@@ -447,7 +572,7 @@ async function adicionarLanc() {
 
 async function removerLanc(id) {
   if (!confirm('Remover este lançamento?')) return;
-  try { await deleteDoc(doc(db,'financeiro',id)); toast('Removido'); }
+  try { await deleteDoc((await orgDoc('financeiro',id))); toast('Removido'); }
   catch(e) { toast('Erro','erro'); }
 }
 
@@ -461,7 +586,7 @@ async function salvarMeta() {
   const mes      = document.getElementById('meta-mes').value;
   if (!mes||!valor) { toast('Preencha meta e mês','erro'); return; }
   try {
-    await setDoc(doc(db,'metas',mes), {valor,unidades,mes,criadoEm:serverTimestamp()});
+    await setDoc((await orgDoc('metas',mes)), {valor,unidades,mes,criadoEm:serverTimestamp()});
     toast('Meta salva!'); renderMeta();
   } catch(e) { toast('Erro','erro'); }
 }
@@ -470,11 +595,15 @@ async function renderMeta() {
   const mes = document.getElementById('meta-mes').value;
   if (!mes) return;
   try {
-    const snap = await getDoc(doc(db,'metas',mes));
+    const snap = await getDoc((await orgDoc('metas',mes)));
     if (!snap.exists()) { document.getElementById('meta-progress').innerHTML=''; return; }
     const meta = snap.data();
     const recMes  = lancamentos.filter(l=>l.tipo==='receita'&&l.data.startsWith(mes)).reduce((s,l)=>s+l.val,0);
-    const vendMes = carros.filter(c=>c.status==='vendido').length;
+    // Antes contava TODOS os carros com status="vendido", de
+    // qualquer mês. Agora conta só as vendas lançadas no
+    // financeiro DENTRO do mês selecionado (mesma lógica do
+    // relatório) — assim a meta de unidades reflete o período certo.
+    const vendMes = lancamentos.filter(l=>l.tipo==='receita'&&l.cat==='Venda de veículo'&&l.data.startsWith(mes)).length;
     const pctFat  = meta.valor>0 ? Math.min(Math.round(recMes/meta.valor*100),100) : 0;
     const pctVend = meta.unidades>0 ? Math.min(Math.round(vendMes/meta.unidades*100),100) : 0;
     document.getElementById('meta-progress').innerHTML=`
@@ -533,7 +662,7 @@ function renderVendedores() {
 
 async function removerVendedor(id) {
   if (!confirm('Remover vendedor?')) return;
-  try { await deleteDoc(doc(db,'vendedores',id)); toast('Removido'); }
+  try { await deleteDoc((await orgDoc('vendedores',id))); toast('Removido'); }
   catch(e) { toast('Erro','erro'); }
 }
 
@@ -576,7 +705,7 @@ function renderComissoes() {
 
 async function removerComissao(id) {
   if (!confirm('Remover comissão?')) return;
-  try { await deleteDoc(doc(db,'comissoes',id)); toast('Removido'); }
+  try { await deleteDoc((await orgDoc('comissoes',id))); toast('Removido'); }
   catch(e) { toast('Erro','erro'); }
 }
 
@@ -606,13 +735,13 @@ async function salvarLead() {
 }
 
 async function atualizarStatusLead(id, status) {
-  try { await updateDoc(doc(db,'crm',id), {status}); toast('Status atualizado'); }
+  try { await updateDoc((await orgDoc('crm',id)), {status}); toast('Status atualizado'); }
   catch(e) { toast('Erro','erro'); }
 }
 
 async function removerLead(id) {
   if (!confirm('Remover este lead?')) return;
-  try { await deleteDoc(doc(db,'crm',id)); toast('Lead removido'); }
+  try { await deleteDoc((await orgDoc('crm',id))); toast('Lead removido'); }
   catch(e) { toast('Erro','erro'); }
 }
 
@@ -662,6 +791,7 @@ document.querySelectorAll('.crm-filtro').forEach(btn=>{
 // (Migrar pra addEventListener é uma limpeza futura opcional.)
 Object.assign(window, {
   showPane, salvarCarro, limparCarro,
+  abrirEdicao, buscarEstoque, irParaPaginaEstoque,
   alterarStatus, excluirCarro,
   toggleCustoItem, abrirCustoForm, fecharCustoForm, salvarGasto, removerGasto,
   setTipo, adicionarLanc, removerLanc, fmtCampo,
@@ -672,14 +802,45 @@ Object.assign(window, {
 // =============================================
 //  INICIALIZAÇÃO
 // =============================================
-setData();
-document.getElementById('fin-data').value  = hojeISO();
-document.getElementById('meta-mes').value  = hojeISO().slice(0,7);
-setTipo('receita');
+async function iniciar() {
+  try {
+    orgCtx = await getOrgContext();
+  } catch (e) {
+    // auth-guard.js já deveria ter redirecionado pro onboarding
+    // antes disso rodar, mas por segurança:
+    console.error('[DIAGNÓSTICO] iniciar() falhou ao pegar contexto:', e);
+    toast('Você ainda não pertence a nenhuma revenda.', 'erro');
+    return;
+  }
 
-iniciarListenerCarros();
-iniciarListenerFinanceiro();
-iniciarListenerGastos();
-iniciarListenerVendedores();
-iniciarListenerComissoes();
-iniciarListenerCRM();
+  // Mostra o nome da revenda e o cargo do usuário no topo, se existirem esses elementos no HTML
+  const nomeOrgEl = document.getElementById('org-nome');
+  if (nomeOrgEl) nomeOrgEl.textContent = orgCtx.orgNome;
+  const roleEl = document.getElementById('user-role');
+  if (roleEl) roleEl.textContent = orgCtx.role;
+
+  colCarros     = await orgCollection('carros');
+  colFinanceiro = await orgCollection('financeiro');
+  colGastos     = await orgCollection('gastos');
+  colMetas      = await orgCollection('metas');
+  colVendedores = await orgCollection('vendedores');
+  colComissoes  = await orgCollection('comissoes');
+  colCRM        = await orgCollection('crm');
+
+  setData();
+  document.getElementById('fin-data').value  = hojeISO();
+  document.getElementById('meta-mes').value  = hojeISO().slice(0,7);
+  setTipo('receita');
+
+  iniciarListenerCarros();
+  iniciarListenerFinanceiro();
+  iniciarListenerGastos();
+  iniciarListenerVendedores();
+  iniciarListenerComissoes();
+  iniciarListenerCRM();
+}
+
+// Só inicia depois que o auth-guard confirmar que a organization
+// está pronta — evita as duas partes do código brigarem pra
+// resolver o mesmo contexto ao mesmo tempo (corrida/race condition)
+window.addEventListener('org-pronta', iniciar, { once: true });

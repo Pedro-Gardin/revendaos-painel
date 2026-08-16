@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Migração — AutoPrime</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      font-family:'Inter',sans-serif; background:#0a0a0b; color:#f5f5f0;
+      min-height:100vh; padding:40px 20px; display:flex; justify-content:center;
+    }
+    .box { width:100%; max-width:560px; }
+    .titulo { font-size:20px; font-weight:700; margin-bottom:4px; }
+    .sub { font-size:13px; color:#a1a1aa; margin-bottom:8px; }
+    .aviso {
+      background:#2a2410; border:1px solid #78350f; color:#fcd34d;
+      padding:12px 14px; border-radius:8px; font-size:13px; margin:16px 0 24px; line-height:1.6;
+    }
+    .field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+    .field label { font-size:12px; font-weight:600; }
+    .field input {
+      padding:10px 12px; background:#1a1a1d; border:1.5px solid #2a2a2e;
+      border-radius:8px; font-family:inherit; font-size:14px; color:#f5f5f0; outline:none;
+    }
+    .btn {
+      width:100%; background:#f5f5f0; color:#0a0a0b; border:none; border-radius:8px;
+      padding:13px; font-family:inherit; font-size:14px; font-weight:700; cursor:pointer;
+      margin-top:8px; display:flex; align-items:center; justify-content:center; gap:8px;
+    }
+    .btn:disabled { opacity:.5; }
+    #mig-log {
+      margin-top:20px; background:#111113; border:1px solid #2a2a2e; border-radius:8px;
+      padding:14px; font-family:monospace; font-size:12px; max-height:320px; overflow-y:auto;
+      white-space:pre-wrap; display:flex; flex-direction:column; gap:2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="titulo">Migração pra estrutura multi-tenant</div>
+    <div class="sub">Logado como <span id="mig-email">—</span></div>
+    <div class="aviso">
+      <i class="ti ti-alert-triangle"></i> Rode isso <strong>só uma vez</strong>, com as regras
+      antigas do Firestore ainda ativas. Os dados originais NÃO são apagados — só copiados
+      pra dentro da nova organization.
+    </div>
+
+    <div class="field">
+      <label>Nome da sua revenda</label>
+      <input type="text" id="mig-nome" value="AutoPrime Garibaldi"/>
+    </div>
+    <div class="field">
+      <label>Identificador (slug)</label>
+      <input type="text" id="mig-slug" value="autoprime-garibaldi"/>
+    </div>
+
+    <button class="btn" id="mig-btn" onclick="migrar()">
+      <i class="ti ti-database-export"></i> Migrar meus dados agora
+    </button>
+
+    <div id="mig-log"></div>
+  </div>
+
+  <script type="module" src="/src/painel/migrar.js"></script>
+</body>
+</html>

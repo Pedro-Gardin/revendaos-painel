@@ -4,7 +4,7 @@
 // =============================================
 import { db } from '../shared/firebase.js';
 import { esc, escAttr, escUrl } from '../shared/seguranca.js';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, doc, getDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
 
 // ─── ESTADO ──────────────────────────────────
 const EMOJIS = { Volkswagen:'🚗',Fiat:'🚙',Toyota:'🚘',Chevrolet:'🚗',Hyundai:'🚗',Jeep:'🚙',Honda:'🚗',Renault:'🚗',Ford:'🚗',Nissan:'🚗',Mitsubishi:'🚙',Kia:'🚗' };
@@ -24,19 +24,45 @@ window.addEventListener('scroll', () => {
   document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 60);
 });
 
-// ─── LISTENER FIREBASE ───────────────────────
-const carrosQuery = query(collection(db, 'carros'), orderBy('criadoEm', 'desc'));
+// ─── RESOLVE A ORGANIZATION PELO SLUG ────────
+// O site é público e não exige login, então descobrimos "qual
+// revenda é essa" pela URL: ?loja=autoprime-garibaldi
+// Sem o parâmetro, cai no slug padrão (uso atual, revenda única).
+// O ID do documento da organization É o slug (ver onboarding.js).
+const SLUG_PADRAO = 'autoprime-garibaldi';
+const params = new URLSearchParams(window.location.search);
+const orgSlug = params.get('loja') || SLUG_PADRAO;
 
-onSnapshot(carrosQuery, snap => {
-  todosCarros = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  renderGrid();
-}, err => {
-  document.getElementById('car-grid').innerHTML = `
-    <div class="estoque-vazio">
-      <i class="ti ti-wifi-off"></i>
-      <p>Não foi possível carregar o estoque.</p>
-    </div>`;
-});
+async function iniciarSite() {
+  const orgSnap = await getDoc(doc(db, 'organizations', orgSlug));
+  if (!orgSnap.exists()) {
+    document.getElementById('car-grid').innerHTML = `
+      <div class="estoque-vazio"><i class="ti ti-building-store"></i><p>Revenda não encontrada.</p></div>`;
+    return;
+  }
+
+  const nomeEl = document.querySelector('.nav-logo');
+  // (mantém "AUTOPRIME" fixo por enquanto — trocar por orgSnap.data().nome
+  // exigiria também trocar o texto do hero/footer, feito numa próxima etapa)
+
+  const carrosQuery = query(
+    collection(db, 'organizations', orgSlug, 'carros'),
+    orderBy('criadoEm', 'desc')
+  );
+
+  onSnapshot(carrosQuery, snap => {
+    todosCarros = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderGrid();
+  }, err => {
+    document.getElementById('car-grid').innerHTML = `
+      <div class="estoque-vazio">
+        <i class="ti ti-wifi-off"></i>
+        <p>Não foi possível carregar o estoque.</p>
+      </div>`;
+  });
+}
+
+iniciarSite();
 
 // ─── FILTROS ─────────────────────────────────
 document.getElementById('filtros').addEventListener('click', e => {

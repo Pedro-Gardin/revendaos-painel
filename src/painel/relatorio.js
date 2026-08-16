@@ -4,7 +4,8 @@
 // =============================================
 import { db, auth } from '../shared/firebase.js';
 import { esc, escAttr } from '../shared/seguranca.js';
-import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { getOrgContext, orgCollection } from '../shared/tenant.js';
+import { query, orderBy, getDocs } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
 // ─── ESTADO ──────────────────────────────────
@@ -40,10 +41,10 @@ onAuthStateChanged(auth, user => {
 // ─── CARREGA DADOS DO FIREBASE ───────────────
 async function carregarDados() {
   try {
-    const finSnap = await getDocs(query(collection(db, 'financeiro'), orderBy('data', 'desc')));
+    const finSnap = await getDocs(query(await orgCollection('financeiro'), orderBy('data', 'desc')));
     lancamentos = finSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    const carSnap = await getDocs(query(collection(db, 'carros'), orderBy('criadoEm', 'desc')));
+    const carSnap = await getDocs(query(await orgCollection('carros'), orderBy('criadoEm', 'desc')));
     carros = carSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
     populaMeses();
@@ -94,6 +95,8 @@ function renderRelatorio() {
   // veículo" + descrição), e não dá pra casar com precisão o
   // carro específico sem um vínculo carroId salvo no lançamento
   // manual do financeiro.
+  const secaoVendas = document.getElementById('tab-vendas')?.closest('section, div.rel-section, .rel-bloco');
+  if (secaoVendas) secaoVendas.style.display = 'none';
 
   // Receitas
   const tabRec = document.getElementById('tab-rec');

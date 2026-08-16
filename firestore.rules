@@ -3,38 +3,108 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Estoque — site público lê; só usuários logados alteram
-    match /carros/{carroId} {
+    // ─── HELPERS ──────────────────────────────
+    function logado() {
+      return request.auth != null;
+    }
+
+    // Pega o documento de membership do usuário logado dentro da org
+    function membership(orgId) {
+      return get(/databases/$(database)/documents/organizations/$(orgId)/members/$(request.auth.uid));
+    }
+
+    function ehMembro(orgId) {
+      return logado() &&
+        exists(/databases/$(database)/documents/organizations/$(orgId)/members/$(request.auth.uid));
+    }
+
+    function role(orgId) {
+      return membership(orgId).data.role;
+    }
+
+    // dono pode tudo dentro da própria org
+    function ehDono(orgId) {
+      return ehMembro(orgId) && role(orgId) == 'dono';
+    }
+
+    // ─── USERS (atalho: uid -> orgId + role) ──
+    // Evita consulta collectionGroup (que não funciona bem
+    // combinada com regras que usam exists()). Cada usuário
+    // só lê/escreve o próprio atalho.
+    match /users/{uid} {
+      allow read, write: if logado() && request.auth.uid == uid;
+    }
+
+    // ─── ORGANIZATIONS ────────────────────────
+    match /organizations/{orgId} {
+      // Qualquer um pode LER o documento da org (nome, slug) —
+      // necessário pro site público resolver "qual revenda é essa"
+      // a partir do slug na URL, mesmo sem estar logado.
       allow read: if true;
-      allow create, update, delete: if request.auth != null;
+
+      // Só cria organization um usuário logado (vira dono automaticamente
+      // no onboarding — a criação do membro "dono" acontece em conjunto).
+      allow create: if logado();
+
+      // Só o dono edita/apaga dados da própria organização
+      allow update, delete: if ehDono(orgId);
+
+      // ─── MEMBERS (usuários + cargo dentro da org) ───
+      match /members/{uid} {
+        // Um membro pode ler a lista de membros da própria org
+        // (precisa pra saber quem mais trabalha ali)
+        allow read: if ehMembro(orgId);
+
+        // Só o dono adiciona/remove/muda cargo de membros.
+        // Exceção: o próprio usuário pode criar o PRÓPRIO registro
+        // como "dono" só no fluxo de onboarding (criação da org).
+        allow create: if (logado() && request.auth.uid == uid && request.resource.data.role == 'dono')
+                      || ehDono(orgId);
+        allow update, delete: if ehDono(orgId);
+      }
+
+      // ─── CARROS — site público lê sem login; equipe da
+      //      org (qualquer role) edita, exceto viewer ───
+      match /carros/{carroId} {
+        allow read: if true;
+        allow create, update, delete: if ehMembro(orgId) && role(orgId) != 'viewer';
+      }
+
+      // ─── FINANCEIRO / GASTOS — dono e financeiro têm
+      //      acesso total; vendedor e viewer não acessam ───
+      match /financeiro/{docId} {
+        allow read, write: if ehMembro(orgId) && role(orgId) in ['dono','financeiro'];
+      }
+      match /gastos/{docId} {
+        allow read, write: if ehMembro(orgId) && role(orgId) in ['dono','financeiro'];
+      }
+
+      // ─── METAS — vendedor pode VER (saber quanto falta),
+      //      mas só dono/financeiro editam ───
+      match /metas/{docId} {
+        allow read: if ehMembro(orgId) && role(orgId) in ['dono','financeiro','vendedor','viewer'];
+        allow write: if ehMembro(orgId) && role(orgId) in ['dono','financeiro'];
+      }
+
+      // ─── VENDEDORES / COMISSÕES — dono e financeiro
+      //      gerenciam; vendedor só lê (vê a própria comissão) ───
+      match /vendedores/{docId} {
+        allow read: if ehMembro(orgId) && role(orgId) != 'viewer';
+        allow write: if ehMembro(orgId) && role(orgId) in ['dono','financeiro'];
+      }
+      match /comissoes/{docId} {
+        allow read: if ehMembro(orgId) && role(orgId) != 'viewer';
+        allow write: if ehMembro(orgId) && role(orgId) in ['dono','financeiro'];
+      }
+
+      // ─── CRM — dono e vendedor têm acesso total;
+      //      financeiro e viewer não acessam ───
+      match /crm/{docId} {
+        allow read, write: if ehMembro(orgId) && role(orgId) in ['dono','vendedor'];
+      }
     }
 
-    // Dados internos — somente painel autenticado
-    match /financeiro/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /gastos/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /metas/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /vendedores/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /comissoes/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /crm/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    // Bloqueia qualquer outra coleção
+    // Bloqueia qualquer coleção fora de organizations/*
     match /{document=**} {
       allow read, write: if false;
     }

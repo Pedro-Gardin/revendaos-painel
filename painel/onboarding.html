@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AutoPrime SaaS — Criar revenda</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --dark: #0a0a0b; --dark2: #111113; --dark3: #1a1a1d;
+      --border: #2a2a2e; --txt: #f5f5f0; --muted: #a1a1aa;
+      --red: #dc2626; --green: #16a34a;
+    }
+    body {
+      font-family:'Inter',sans-serif; background:var(--dark); color:var(--txt);
+      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+    }
+    .box { width:100%; max-width:420px; }
+    .logo { font-size:20px; font-weight:800; letter-spacing:2px; margin-bottom:32px; text-align:center; }
+    .logo span { color:var(--muted); }
+    .titulo { font-size:22px; font-weight:700; margin-bottom:6px; text-align:center; }
+    .sub { font-size:13px; color:var(--muted); margin-bottom:32px; text-align:center; }
+    .field { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+    .field label { font-size:12px; font-weight:600; }
+    .field input {
+      padding:11px 12px; background:var(--dark3); border:1.5px solid var(--border);
+      border-radius:8px; font-family:inherit; font-size:14px; color:var(--txt); outline:none;
+    }
+    .field input:focus { border-color:#ffffff40; }
+    .field-hint { font-size:11px; color:var(--muted); }
+    .btn {
+      width:100%; background:var(--txt); color:var(--dark); border:none; border-radius:8px;
+      padding:13px; font-family:inherit; font-size:14px; font-weight:700; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px;
+    }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .msg { display:none; padding:12px 14px; border-radius:8px; font-size:13px; margin-bottom:16px; }
+    .msg.show { display:block; }
+    .msg.erro { background:#2a1414; color:#fca5a5; border:1px solid #7f1d1d; }
+    .msg.ok   { background:#0f2a17; color:#86efac; border:1px solid #14532d; }
+    .rodape { margin-top:24px; text-align:center; font-size:12px; color:var(--muted); }
+    .rodape button { background:none; border:none; color:var(--muted); text-decoration:underline; cursor:pointer; font-family:inherit; font-size:12px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="logo">AUTO<span>PRIME</span> SAAS</div>
+    <div class="titulo">Vamos criar sua revenda</div>
+    <div class="sub">Logado como <span id="onb-email">—</span></div>
+
+    <div class="msg" id="onb-msg"></div>
+
+    <div class="field">
+      <label>Nome da revenda</label>
+      <input type="text" id="onb-nome" placeholder="Ex: AutoPrime Garibaldi"/>
+    </div>
+
+    <div class="field">
+      <label>Identificador único (slug)</label>
+      <input type="text" id="onb-slug" placeholder="autoprime-garibaldi"/>
+      <div class="field-hint">Usado nos links do seu site público. Só letras minúsculas, números e hífen.</div>
+    </div>
+
+    <button class="btn" id="onb-btn" onclick="criarRevenda()">
+      <i class="ti ti-building-store"></i> Criar minha revenda
+    </button>
+
+    <div class="rodape">
+      <button onclick="sairOnboarding()">Sair e usar outra conta</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/painel/onboarding.js"></script>
+</body>
+</html>
