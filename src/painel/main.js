@@ -1,5 +1,5 @@
 // =============================================
-//  PAINEL AUTOPRIME v2
+//  PAINEL REVENDAOS v2
 //  main.js — com upload de fotos via Cloudinary
 // =============================================
 import '../shared/auth-guard.js';
@@ -42,6 +42,7 @@ let custoCarroAtivo = null;
 let crmFiltro   = 'todos';
 let estoqueBusca    = '';
 let estoquePagina   = 1;
+let estoqueOrdem    = 'recente'; // 'recente' ou 'antigo'
 const ESTOQUE_POR_PAGINA = 12;
 let carroEditando   = null;  // id do carro em edição (null = modo "adicionar")
 let fotosExistentes = [];    // URLs já salvas do carro em edição
@@ -51,6 +52,22 @@ function getEmoji(m)  { return EMOJIS[m] || '🚗'; }
 function fmt(n)       { return 'R$ ' + Math.round(n).toLocaleString('pt-BR'); }
 function hojeISO()    { return new Date().toISOString().slice(0,10); }
 function fmtData(iso) { return iso.split('-').reverse().join('/'); }
+
+// Calcula há quanto tempo o carro está cadastrado, a partir do
+// campo criadoEm (Timestamp do Firestore). Logo após criar um
+// carro, o valor pode chegar como null por uma fração de segundo
+// (até o servidor confirmar o serverTimestamp) — nesse caso mostra
+// "agora mesmo" em vez de quebrar.
+function infoCadastro(criadoEm) {
+  if (!criadoEm || typeof criadoEm.toDate !== 'function') {
+    return { dataStr: '—', diasStr: 'cadastrado agora mesmo', dias: 0, ms: 0 };
+  }
+  const data = criadoEm.toDate();
+  const dataStr = data.toLocaleDateString('pt-BR');
+  const dias = Math.floor((Date.now() - data.getTime()) / (1000 * 60 * 60 * 24));
+  const diasStr = dias <= 0 ? 'cadastrado hoje' : dias === 1 ? '1 dia em estoque' : `${dias} dias em estoque`;
+  return { dataStr, diasStr, dias, ms: data.getTime() };
+}
 
 function fmtCampo(el) {
   const n = el.value.replace(/\D/g,'');
@@ -139,6 +156,16 @@ function renderEstoque() {
     );
   }
 
+  // A lista já vem ordenada do Firestore por mais recente (padrão),
+  // então só precisamos inverter quando o usuário escolhe "mais antigo"
+  if (estoqueOrdem === 'antigo') {
+    filtrados = [...filtrados].sort((a, b) => {
+      const msA = a.criadoEm?.toDate ? a.criadoEm.toDate().getTime() : 0;
+      const msB = b.criadoEm?.toDate ? b.criadoEm.toDate().getTime() : 0;
+      return msA - msB;
+    });
+  }
+
   if (!filtrados.length) {
     list.innerHTML = `<div class="empty-state"><i class="ti ti-search-off"></i><p>Nenhum veículo encontrado pra essa busca.</p></div>`;
     const pagEl = document.getElementById('estoque-paginacao');
@@ -152,7 +179,12 @@ function renderEstoque() {
   const pagina = filtrados.slice(inicio, inicio + ESTOQUE_POR_PAGINA);
 
   const labels = {disponivel:'Disponível',reservado:'Reservado',vendido:'Vendido'};
-  list.innerHTML = pagina.map(c=>`
+  list.innerHTML = pagina.map(c=>{
+    const { dataStr, diasStr, dias } = infoCadastro(c.criadoEm);
+    // Destaca em laranja/vermelho carros parados há muito tempo,
+    // pra chamar atenção visualmente na lista
+    const corDias = dias >= 60 ? '#dc2626' : dias >= 30 ? '#d97706' : 'var(--muted)';
+    return `
     <div class="car-list-item">
       <div class="car-emoji">${c.fotos&&c.fotos[0]
         ? `<img src="${escAttr(c.fotos[0])}" style="width:48px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">`
@@ -160,6 +192,9 @@ function renderEstoque() {
       <div class="car-info">
         <div class="car-nome">${esc(c.marca)} ${esc(c.modelo)} · ${esc(c.ano)}</div>
         <div class="car-sub">${esc(c.km)} km · ${esc(c.cor)} · ${esc(c.cambio)}</div>
+        <div class="car-sub" style="color:${corDias}">
+          <i class="ti ti-calendar" style="font-size:12px"></i> ${esc(dataStr)} · ${esc(diasStr)}
+        </div>
       </div>
       <div class="car-preco">${esc(c.preco)}</div>
       <div class="car-badge badge-${escAttr(c.status)}">${esc(labels[c.status]||c.status)}</div>
@@ -168,9 +203,16 @@ function renderEstoque() {
         <button class="btn-icon" onclick="alterarStatus('${escAttr(c.id)}','${escAttr(c.status)}')" title="Mudar situação"><i class="ti ti-refresh"></i></button>
         <button class="btn-icon del" onclick="excluirCarro('${escAttr(c.id)}')" title="Excluir"><i class="ti ti-trash"></i></button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   renderEstoquePaginacao(totalPaginas);
+}
+
+function ordenarEstoque(valor) {
+  estoqueOrdem = valor;
+  estoquePagina = 1;
+  renderEstoque();
 }
 
 function renderEstoquePaginacao(totalPaginas) {
@@ -826,7 +868,7 @@ document.querySelectorAll('.crm-filtro').forEach(btn=>{
 // (Migrar pra addEventListener é uma limpeza futura opcional.)
 Object.assign(window, {
   showPane, salvarCarro, limparCarro,
-  abrirEdicao, buscarEstoque, irParaPaginaEstoque,
+  abrirEdicao, buscarEstoque, irParaPaginaEstoque, ordenarEstoque,
   alterarStatus, excluirCarro,
   toggleCustoItem, abrirCustoForm, fecharCustoForm, salvarGasto, removerGasto,
   setTipo, adicionarLanc, removerLanc, fmtCampo,
