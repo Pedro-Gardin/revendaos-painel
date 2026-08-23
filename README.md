@@ -1,4 +1,4 @@
-# AutoPrime — Painel para Revendedoras de Automóveis
+# RevendaOS — SaaS para Revendas de Automóveis
 
 Sistema de gestão (estoque, financeiro, CRM, comissões) + site público de vitrine.
 
