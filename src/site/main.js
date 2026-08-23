@@ -41,9 +41,7 @@ async function iniciarSite() {
     return;
   }
 
-  const nomeEl = document.querySelector('.nav-logo');
-  // (mantém "AUTOPRIME" fixo por enquanto — trocar por orgSnap.data().nome
-  // exigiria também trocar o texto do hero/footer, feito numa próxima etapa)
+  aplicarBrandingDaRevenda(orgSnap.data());
 
   const carrosQuery = query(
     collection(db, 'organizations', orgSlug, 'carros'),
@@ -60,6 +58,46 @@ async function iniciarSite() {
         <p>Não foi possível carregar o estoque.</p>
       </div>`;
   });
+}
+
+// Troca o nome fixo "AutoPrime" pelo nome real da revenda em
+// todo lugar que aparece na página: aba do navegador, logo da
+// navbar, rodapé e frase de destaque do topo.
+//
+// OBS: endereço, WhatsApp e a história do "fundador" continuam
+// fixos — são conteúdos específicos de cada revenda que ainda
+// não têm campo próprio no cadastro (fica pra uma próxima etapa,
+// quando adicionarmos um "perfil da revenda" no onboarding).
+function aplicarBrandingDaRevenda(org) {
+  const nome = org.nome || 'Minha Revenda';
+
+  document.title = `${nome} — Seminovos com Procedência`;
+
+  // O logo é escrito em duas partes com cores diferentes (ex:
+  // "AUTO" + "PRIME" em <span>). Divide o nome ao meio das
+  // palavras pra manter esse mesmo efeito visual com qualquer nome.
+  const palavras = nome.toUpperCase().split(' ');
+  const meio = Math.ceil(palavras.length / 2);
+  const parte1 = palavras.slice(0, meio).join(' ');
+  const parte2 = palavras.slice(meio).join(' ');
+
+  document.querySelectorAll('.nav-logo, .footer-logo').forEach(el => {
+    el.innerHTML = parte2
+      ? `${esc(parte1)}<span>${esc(parte2)}</span>`
+      : esc(parte1);
+  });
+
+  const eyebrowEl = document.querySelector('.hero-eyebrow');
+  if (eyebrowEl) eyebrowEl.textContent = `${nome} · Seminovos Premium`;
+
+  const labelDiffEl = document.querySelectorAll('.section-label')[1]; // "Por que a AutoPrime"
+  if (labelDiffEl) labelDiffEl.textContent = `Por que a ${nome}`;
+
+  const footerCopyEl = document.querySelector('.footer-copy');
+  if (footerCopyEl) {
+    const ano = new Date().getFullYear();
+    footerCopyEl.textContent = `© ${ano} ${nome} · Todos os direitos reservados`;
+  }
 }
 
 iniciarSite();

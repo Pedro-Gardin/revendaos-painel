@@ -8,8 +8,8 @@ import { esc, escAttr } from '../shared/seguranca.js';
 import { uploadFoto } from '../shared/cloudinary.js';
 import { getOrgContext, orgCollection, orgDoc, podeEditar } from '../shared/tenant.js';
 import {
-  doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc,
-  onSnapshot, query, orderBy, serverTimestamp
+  doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc, getDocs,
+  onSnapshot, query, where, orderBy, serverTimestamp
 } from 'firebase/firestore';
 
 // Coleções — resolvidas em runtime, escopadas pra organization
@@ -236,6 +236,40 @@ document.getElementById('file-input').addEventListener('change', function() {
   this.value = '';
 });
 
+// Mantém o lançamento de "Compra de veículo" no financeiro em
+// sincronia com o campo custo do carro. Antes, editar o custo
+// de um carro já lançado não refletia no financeiro — o
+// lançamento antigo ficava com o valor errado pra sempre.
+async function sincronizarCustoFinanceiro(carroId, custoNovo, marca, modelo, ano) {
+  const snap = await getDocs(query(
+    colFinanceiro,
+    where('carroId', '==', carroId),
+    where('cat', '==', 'Compra de veículo')
+  ));
+
+  if (!snap.empty) {
+    // Já existe lançamento — atualiza o valor (ou remove, se
+    // o custo foi zerado) em vez de deixar desatualizado
+    const lancamentoRef = snap.docs[0].ref;
+    if (custoNovo > 0) {
+      await updateDoc(lancamentoRef, {
+        val: custoNovo,
+        desc: `Compra ${marca} ${modelo} ${ano}`,
+      });
+    } else {
+      await deleteDoc(lancamentoRef);
+    }
+  } else if (custoNovo > 0) {
+    // Não existia lançamento (ex: carro criado sem custo) e
+    // agora um custo foi informado na edição — cria o lançamento
+    await addDoc(colFinanceiro, {
+      tipo:'despesa', desc:`Compra ${marca} ${modelo} ${ano}`,
+      cat:'Compra de veículo', val:custoNovo, data:hojeISO(),
+      carroId, criadoEm: serverTimestamp()
+    });
+  }
+}
+
 async function salvarCarro() {
   const marca  = document.getElementById('f-marca').value.trim();
   const modelo = document.getElementById('f-modelo').value.trim();
@@ -275,6 +309,7 @@ async function salvarCarro() {
 
     if (editando) {
       await updateDoc((await orgDoc('carros',carroEditando)), carro);
+      await sincronizarCustoFinanceiro(carroEditando, custo, marca, modelo, ano);
       toast('Veículo atualizado!');
     } else {
       carro.criadoEm = serverTimestamp();
