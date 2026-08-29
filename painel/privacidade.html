@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RevendaOS — Política de Privacidade</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --dark:   #0a0a0b;
+      --dark2:  #111113;
+      --dark3:  #1a1a1d;
+      --border: #2a2a2e;
+      --txt:    #f5f5f0;
+      --muted:  #a1a1aa;
+      --accent: #00D97E;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--dark);
+      color: var(--txt);
+      line-height: 1.7;
+    }
+    .topo {
+      background: #0E1420;
+      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .logo span { color: var(--accent); }
+    .voltar {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .voltar:hover { color: var(--txt); }
+    .conteudo {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .atualizado {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 32px;
+    }
+    h2 {
+      font-size: 18px;
+      margin-top: 36px;
+      margin-bottom: 12px;
+      color: var(--accent);
+    }
+    h3 {
+      font-size: 15px;
+      margin-top: 20px;
+      margin-bottom: 8px;
+    }
+    p, li { color: #d4d4d8; font-size: 14px; margin-bottom: 10px; }
+    ul { padding-left: 20px; margin-bottom: 12px; }
+    strong { color: var(--txt); }
+    hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+    a { color: var(--accent); }
+    .placeholder {
+      background: #2a2410;
+      color: #fcd34d;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topo">
+    <div class="logo">REVENDA<span>OS</span></div>
+    <a class="voltar" href="/painel/login.html"><i class="ti ti-arrow-left"></i> Voltar</a>
+  </div>
+
+  <div class="conteudo">
+    <h1>Política de Privacidade</h1>
+    <div class="atualizado">Última atualização: <span class="placeholder">29/08/2026</span></div>
+
+    <p>Esta Política de Privacidade descreve como o <strong>RevendaOS</strong> ("nós", "sistema", "plataforma") coleta, usa, armazena e protege os dados pessoais tratados através da plataforma, em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD).</p>
+    <p>Ao utilizar o RevendaOS, você concorda com os termos descritos abaixo.</p>
+
+    <hr/>
+
+    <h2>1. Quem é o responsável pelo tratamento dos dados</h2>
+    <p>O RevendaOS é operado por <strong class="placeholder">Pedro Henrique Cherubini Gardin</strong>, CPF <strong class="placeholder">04261414074</strong>, com contato através do e-mail <strong class="placeholder">pedrohenriquecherubinigardin@gmail.com</strong>.</p>
+    <p>Enquanto o RevendaOS opera como pessoa física, este responsável atua como <strong>Controlador</strong> dos dados tratados na plataforma, nos termos da LGPD.</p>
+
+    <h2>2. Quais dados coletamos</h2>
+
+    <h3>2.1. Dados da revenda (nosso cliente direto)</h3>
+    <p>Ao criar uma conta no RevendaOS, coletamos:</p>
+    <ul>
+      <li>Nome da revenda</li>
+      <li>E-mail e senha de acesso (armazenados de forma segura pelo Firebase Authentication, com senha criptografada — nunca temos acesso à senha em texto puro)</li>
+      <li>Identificador único (slug) escolhido para a revenda</li>
+    </ul>
+
+    <h3>2.2. Dados de usuários internos da revenda</h3>
+    <p>Quando o dono de uma revenda convida membros da equipe (vendedor, financeiro, etc.), coletamos nome, e-mail e o cargo/função atribuído dentro da plataforma.</p>
+
+    <h3>2.3. Dados de clientes finais (CRM)</h3>
+    <p>Quando uma revenda cadastra um lead/cliente interessado em um veículo, coletamos, a pedido e sob responsabilidade da revenda: nome do cliente, telefone/WhatsApp, interesse declarado e observações registradas pelo vendedor.</p>
+    <p><strong>Importante:</strong> esses dados são inseridos pelas revendas clientes, que atuam como <strong>Operadoras</strong> desses dados perante seus próprios clientes finais. A revenda é responsável por garantir que possui base legal e consentimento adequados para cadastrar esses dados no sistema.</p>
+
+    <h3>2.4. Dados de veículos e financeiros</h3>
+    <p>Informações sobre o estoque de veículos, preços, custos, lançamentos financeiros e comissões cadastradas pela revenda. Esses dados são de natureza comercial, não pessoal, mas ficam armazenados com o mesmo nível de proteção.</p>
+
+    <h3>2.5. Fotos de veículos</h3>
+    <p>Enviadas pelas revendas para exibição pública no site de vitrine. Armazenadas através do serviço Cloudinary.</p>
+
+    <h3>2.6. Dados de navegação</h3>
+    <p>Como em qualquer aplicação web, podem ser coletados automaticamente dados técnicos básicos (endereço IP, tipo de navegador) pelos provedores de infraestrutura (Google Firebase, Vercel) para fins de segurança e funcionamento do serviço.</p>
+
+    <h2>3. Para que usamos esses dados</h2>
+    <ul>
+      <li>Viabilizar o funcionamento do painel de gestão e do site público de cada revenda</li>
+      <li>Autenticar usuários e controlar permissões de acesso</li>
+      <li>Exibir o estoque de veículos no site público da revenda</li>
+      <li>Gerar relatórios financeiros e de metas para a própria revenda</li>
+      <li>Comunicação relacionada ao funcionamento da conta (ex: recuperação de senha)</li>
+      <li>Cumprimento de obrigações legais, quando aplicável</li>
+    </ul>
+    <p>Não utilizamos os dados para venda a terceiros, nem para publicidade direcionada fora da plataforma.</p>
+
+    <h2>4. Onde os dados ficam armazenados</h2>
+    <ul>
+      <li><strong>Banco de dados e autenticação:</strong> Google Firebase (Firestore/Authentication), com banco de dados hospedado na região <strong>São Paulo, Brasil</strong> (southamerica-east1).</li>
+      <li><strong>Fotos de veículos:</strong> Cloudinary, serviço de hospedagem de imagens (infraestrutura internacional).</li>
+      <li><strong>Hospedagem do site e painel:</strong> Vercel.</li>
+    </ul>
+
+    <h2>5. Compartilhamento de dados</h2>
+    <p>Não compartilhamos dados pessoais com terceiros para fins comerciais. Os dados podem ser acessados pelos provedores de infraestrutura acima (Google Firebase, Cloudinary, Vercel), estritamente para viabilizar o funcionamento técnico da plataforma. Podemos divulgar dados caso exigido por ordem judicial ou autoridade competente.</p>
+
+    <h2>6. Isolamento entre revendas</h2>
+    <p>Cada revenda cadastrada no RevendaOS opera em um ambiente isolado ("organização"). As regras de segurança do banco de dados impedem que uma revenda acesse dados de outra revenda. Dentro de cada revenda, o acesso aos dados é ainda controlado por cargo (dono, vendedor, financeiro, visualizador), conforme configurado pelo dono da conta.</p>
+
+    <h2>7. Seus direitos como titular de dados</h2>
+    <p>Conforme a LGPD, você tem direito a: confirmar a existência de tratamento; acessar seus dados; corrigir dados incompletos, inexatos ou desatualizados; solicitar anonimização, bloqueio ou eliminação de dados desnecessários; solicitar a portabilidade dos dados; solicitar a exclusão dos dados tratados com base no consentimento; e revogar o consentimento a qualquer momento.</p>
+    <p>Para exercer qualquer um desses direitos, entre em contato através de <strong class="placeholder">pedrohenriquecherubinigardin@gmail.com</strong>.</p>
+
+    <h2>8. Retenção e exclusão de dados</h2>
+    <p>Os dados são mantidos enquanto a conta da revenda estiver ativa. Caso o dono da revenda solicite o encerramento da conta, os dados poderão ser excluídos em até <strong class="placeholder"> 30 dias </strong>, exceto quando houver obrigação legal de retenção por prazo maior.</p>
+
+    <h2>9. Segurança dos dados</h2>
+    <p>Adotamos medidas técnicas para proteger os dados armazenados, incluindo autenticação obrigatória para acesso ao painel, regras de segurança no banco de dados que isolam os dados por revenda e por cargo de usuário, comunicação criptografada (HTTPS), e validação de dados para prevenir ataques comuns (como XSS).</p>
+    <p>Nenhum sistema é 100% livre de falhas. Em caso de incidente de segurança que possa afetar dados pessoais, comunicaremos os titulares e a Autoridade Nacional de Proteção de Dados (ANPD) conforme exigido por lei.</p>
+
+    <h2>10. Alterações nesta política</h2>
+    <p>Esta política pode ser atualizada periodicamente. Alterações relevantes serão comunicadas através do painel ou por e-mail cadastrado.</p>
+
+    <h2>11. Contato</h2>
+    <p>Dúvidas sobre esta Política de Privacidade ou sobre o tratamento dos seus dados podem ser enviadas para <strong class="placeholder">pedrohenriquecherubinigardin@gmail.com</strong>.</p>
+  </div>
+</body>
+</html>

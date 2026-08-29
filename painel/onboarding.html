@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>RevendaOS — Criar revenda</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -18,8 +18,8 @@
       min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
     }
     .box { width:100%; max-width:420px; }
-    .logo { font-size:20px; font-weight:800; letter-spacing:2px; margin-bottom:32px; text-align:center; }
-    .logo span { color:var(--muted); }
+    .logo { font-family:'Space Grotesk', sans-serif; font-size:20px; font-weight:700; letter-spacing:1px; margin-bottom:32px; text-align:center; }
+    .logo span { color:#00D97E; }
     .titulo { font-size:22px; font-weight:700; margin-bottom:6px; text-align:center; }
     .sub { font-size:13px; color:var(--muted); margin-bottom:32px; text-align:center; }
     .field { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
@@ -70,6 +70,11 @@
 
     <div class="rodape">
       <button onclick="sairOnboarding()">Sair e usar outra conta</button>
+      <div style="margin-top:12px; font-size:11px">
+        <a href="privacidade.html" style="color:var(--muted)">Política de Privacidade</a>
+        &nbsp;·&nbsp;
+        <a href="termos.html" style="color:var(--muted)">Termos de Uso</a>
+      </div>
     </div>
   </div>
 

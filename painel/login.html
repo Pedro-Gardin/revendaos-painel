@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>RevendaOS — Entrar</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -62,15 +62,16 @@
     }
 
     .esq-logo {
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 22px;
-      font-weight: 800;
-      letter-spacing: 2px;
+      font-weight: 700;
+      letter-spacing: 1px;
       color: var(--txt);
       position: relative;
       z-index: 1;
     }
 
-    .esq-logo span { color: var(--muted); }
+    .esq-logo span { color: #00D97E; }
 
     .esq-meio {
       position: relative;
@@ -444,7 +445,10 @@
       </button>
 
       <div class="rodape-login">
-        Problemas para acessar? Fale com o suporte.
+        Problemas para acessar? Fale com o suporte.<br/>
+        <a href="privacidade.html" style="color:var(--muted)">Política de Privacidade</a>
+        &nbsp;·&nbsp;
+        <a href="termos.html" style="color:var(--muted)">Termos de Uso</a>
       </div>
 
     </div>

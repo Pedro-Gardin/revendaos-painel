@@ -7,14 +7,14 @@
 
 :root {
   /* Sidebar */
-  --sb-bg:        #0a0a0a;
+  --sb-bg:        #0E1420;
   --sb-text:      #a1a1aa;
   --sb-text-act:  #ffffff;
   --sb-active:    #ffffff;
   --sb-active-tx: #0a0a0a;
-  --sb-hover:     #1a1a1a;
+  --sb-hover:     #1a2332;
   --sb-width:     240px;
-  --sb-border:    #1f1f1f;
+  --sb-border:    #1c2433;
 
   /* Main */
   --bg:       #f4f4f5;
@@ -23,6 +23,10 @@
   --text:     #18181b;
   --muted:    #71717a;
   --radius:   10px;
+
+  /* Marca RevendaOS */
+  --accent:   #00D97E;
+  --accent-2: #0EA5A5;
 
   /* Cores */
   --green:    #16a34a;
@@ -68,13 +72,14 @@ body {
 }
 
 .logo-text {
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 20px;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   color: #ffffff;
 }
 
-.logo-text span { color: #a1a1aa; }
+.logo-text span { color: var(--accent); }
 
 .sidebar-nav {
   flex: 1;

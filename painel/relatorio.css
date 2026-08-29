@@ -127,12 +127,13 @@ body {
 }
 
 .rel-logo {
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 24px;
   font-weight: 700;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
 }
 
-.rel-logo span { color: #C8102E; }
+.rel-logo span { color: #00D97E; }
 
 .rel-subtitulo {
   font-size: 12px;
@@ -349,7 +350,7 @@ tr:last-child td { border-bottom: none; }
     padding: 20px 24px;
   }
 
-  .rel-logo span { color: #C8102E !important; }
+  .rel-logo span { color: #00D97E !important; }
 
   /* Cards */
   .rel-cards { border-bottom: 1px solid #E2E5EA; }
