@@ -8,7 +8,7 @@ import { esc, escAttr } from '../shared/seguranca.js';
 import { uploadFoto } from '../shared/cloudinary.js';
 import { getOrgContext, orgCollection, orgDoc, podeEditar } from '../shared/tenant.js';
 import {
-  doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc, getDocs,
+  collection, doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc, getDocs,
   onSnapshot, query, where, orderBy, serverTimestamp
 } from 'firebase/firestore';
 
@@ -328,7 +328,7 @@ async function salvarCarro() {
     let urlsNovas = [];
     if (fotosParaUpload.length > 0) {
       toast('Enviando ' + fotosParaUpload.length + ' foto(s)...');
-      urlsNovas = await Promise.all(fotosParaUpload.map(f => uploadFoto(f)));
+      urlsNovas = await Promise.all(fotosParaUpload.map(f => uploadFoto(f, orgCtx?.orgSlug)));
     }
     // Na edição: fotos existentes que não foram removidas + fotos novas.
     // Na criação: só as novas mesmo.
@@ -921,3 +921,18 @@ async function iniciar() {
 // está pronta — evita as duas partes do código brigarem pra
 // resolver o mesmo contexto ao mesmo tempo (corrida/race condition)
 window.addEventListener('org-pronta', iniciar, { once: true });
+
+// ─── TESTE DE ISOLAMENTO ENTRE REVENDAS (uso manual, via console) ───
+// Tenta ler uma coleção de OUTRA organization, pra confirmar que
+// as regras do Firestore realmente bloqueiam. Uso no console:
+//   testarIsolamento('slug-da-outra-revenda')
+window.testarIsolamento = async function(orgIdAlheio, colecaoNome = 'financeiro') {
+  console.log(`Tentando ler organizations/${orgIdAlheio}/${colecaoNome}...`);
+  try {
+    const snap = await getDocs(collection(db, 'organizations', orgIdAlheio, colecaoNome));
+    console.error(`⚠️ FALHA DE SEGURANÇA: consegui ler ${snap.size} documento(s)! As regras não estão bloqueando.`);
+    snap.forEach(d => console.log(d.id, d.data()));
+  } catch (e) {
+    console.log(`✅ Bloqueado como esperado: ${e.code} — ${e.message}`);
+  }
+};
