@@ -64,6 +64,17 @@
       <div class="field-hint">Usado nos links do seu site público. Só letras minúsculas, números e hífen.</div>
     </div>
 
+    <div style="display:flex; gap:12px">
+      <div class="field" style="flex:2">
+        <label>Cidade</label>
+        <input type="text" id="onb-cidade" placeholder="Ex: Garibaldi"/>
+      </div>
+      <div class="field" style="flex:1">
+        <label>UF</label>
+        <input type="text" id="onb-uf" placeholder="RS" maxlength="2" style="text-transform:uppercase"/>
+      </div>
+    </div>
+
     <button class="btn" id="onb-btn" onclick="criarRevenda()">
       <i class="ti ti-building-store"></i> Criar minha revenda
     </button>

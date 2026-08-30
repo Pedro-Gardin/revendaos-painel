@@ -40,6 +40,8 @@ document.getElementById('onb-slug')?.addEventListener('input', e => {
 async function criarRevenda() {
   const nome = document.getElementById('onb-nome').value.trim();
   let slug   = document.getElementById('onb-slug').value.trim();
+  const cidade = document.getElementById('onb-cidade').value.trim();
+  const uf     = document.getElementById('onb-uf').value.trim().toUpperCase();
   const msgEl = document.getElementById('onb-msg');
 
   if (!nome) { mostrarMsg('Informe o nome da revenda.', 'erro'); return; }
@@ -65,6 +67,8 @@ async function criarRevenda() {
     await setDoc(orgRef, {
       nome,
       slug,
+      cidade,
+      uf,
       plano: 'gratis',
       criadoEm: serverTimestamp(),
       criadoPor: usuarioAtual.uid,

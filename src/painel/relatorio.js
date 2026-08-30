@@ -1,5 +1,5 @@
 // =============================================
-//  RELATÓRIO MENSAL — AutoPrime
+//  RELATÓRIO MENSAL — RevendaOS
 //  relatorio.js — Firebase modular
 // =============================================
 import { db, auth } from '../shared/firebase.js';
@@ -41,6 +41,13 @@ onAuthStateChanged(auth, user => {
 // ─── CARREGA DADOS DO FIREBASE ───────────────
 async function carregarDados() {
   try {
+    const ctx = await getOrgContext();
+    const cidadeEl = document.getElementById('rel-cidade');
+    if (cidadeEl) {
+      cidadeEl.textContent = ctx.orgCidade
+        ? `${ctx.orgCidade}${ctx.orgUf ? ' — ' + ctx.orgUf : ''}`
+        : ''; // revenda sem cidade cadastrada ainda: não mostra nada, em vez de errado
+    }
     const finSnap = await getDocs(query(await orgCollection('financeiro'), orderBy('data', 'desc')));
     lancamentos = finSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 

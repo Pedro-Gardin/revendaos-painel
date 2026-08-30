@@ -13,7 +13,7 @@
 import { db, auth } from './firebase.js';
 import { collection, doc, getDoc } from 'firebase/firestore';
 
-let contextoCache = null; // { orgId, orgSlug, orgNome, role, uid }
+let contextoCache = null; // { orgId, orgSlug, orgNome, orgCidade, orgUf, role, uid }
 
 // Erro específico: usuário logado mas sem organization vinculada.
 // Usado pro auth-guard saber diferenciar isso de uma falha
@@ -27,16 +27,11 @@ export async function getOrgContext() {
   if (!user) throw new Error('Usuário não autenticado.');
 
   const userSnap = await getDoc(doc(db, 'users', user.uid));
-  console.log('[DIAGNÓSTICO] uid buscado:', user.uid);
-  console.log('[DIAGNÓSTICO] documento existe?', userSnap.exists());
-  console.log('[DIAGNÓSTICO] dados do documento:', userSnap.data());
-
   if (!userSnap.exists()) {
     throw new SemOrganizationError('Usuário não está vinculado a nenhuma revenda (organization).');
   }
 
   const { orgId, role } = userSnap.data();
-  console.log('[DIAGNÓSTICO] orgId extraído:', orgId, '| role extraído:', role);
 
   const orgSnap = await getDoc(doc(db, 'organizations', orgId));
   const orgData = orgSnap.data() || {};
@@ -45,6 +40,8 @@ export async function getOrgContext() {
     orgId,
     orgSlug: orgData.slug || orgId,
     orgNome: orgData.nome || '',
+    orgCidade: orgData.cidade || '',
+    orgUf: orgData.uf || '',
     role,
     uid: user.uid,
   };
