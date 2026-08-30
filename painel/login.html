@@ -10,14 +10,16 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --dark:   #0a0a0b;
-      --dark2:  #111113;
-      --dark3:  #1a1a1d;
-      --border: #2a2a2e;
-      --txt:    #f5f5f0;
-      --muted:  #a1a1aa;
-      --red:    #dc2626;
-      --green:  #16a34a;
+      --dark:    #0a0a0b;
+      --dark2:   #111113;
+      --dark3:   #1a1a1d;
+      --border:  #2a2a2e;
+      --txt:     #f5f5f0;
+      --muted:   #a1a1aa;
+      --red:     #dc2626;
+      --green:   #16a34a;
+      --accent:  #00D97E;
+      --accent2: #10b981;
     }
 
     body {
@@ -29,7 +31,9 @@
       grid-template-columns: 1fr 1fr;
     }
 
-    /* LADO ESQUERDO — visual */
+    /* ═══════════════════════════════════════════
+       LADO ESQUERDO — visual
+       ═══════════════════════════════════════════ */
     .lado-esq {
       background: var(--dark2);
       border-right: 1px solid var(--border);
@@ -41,24 +45,48 @@
       overflow: hidden;
     }
 
+    /* Gradient mesh animado */
     .lado-esq::before {
       content: '';
       position: absolute;
-      top: -100px; right: -100px;
-      width: 400px; height: 400px;
+      top: -40%; right: -20%;
+      width: 80%; height: 80%;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(0,217,126,0.08) 0%, rgba(16,185,129,0.03) 40%, transparent 70%);
+      animation: floatMesh 8s ease-in-out infinite alternate;
       pointer-events: none;
     }
 
     .lado-esq::after {
       content: '';
       position: absolute;
-      bottom: -80px; left: -80px;
-      width: 300px; height: 300px;
+      bottom: -30%; left: -15%;
+      width: 60%; height: 60%;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.015) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(0,217,126,0.05) 0%, rgba(16,185,129,0.02) 40%, transparent 70%);
+      animation: floatMesh2 10s ease-in-out infinite alternate;
       pointer-events: none;
+    }
+
+    @keyframes floatMesh {
+      0%   { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-30px, 20px) scale(1.1); }
+    }
+
+    @keyframes floatMesh2 {
+      0%   { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(20px, -15px) scale(1.05); }
+    }
+
+    /* Grid de pontos decorativo */
+    .dot-grid {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+      mask-image: radial-gradient(ellipse 70% 60% at 60% 40%, black 20%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 70% 60% at 60% 40%, black 20%, transparent 100%);
     }
 
     .esq-logo {
@@ -69,9 +97,10 @@
       color: var(--txt);
       position: relative;
       z-index: 1;
+      animation: fadeSlideDown 0.7s ease-out both;
     }
 
-    .esq-logo span { color: #00D97E; }
+    .esq-logo span { color: var(--accent); }
 
     .esq-meio {
       position: relative;
@@ -83,18 +112,19 @@
       font-weight: 600;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: var(--muted);
+      color: var(--accent2);
       margin-bottom: 20px;
       display: flex;
       align-items: center;
       gap: 10px;
+      animation: fadeSlideUp 0.6s ease-out 0.15s both;
     }
 
     .esq-tag::before {
       content: '';
       display: inline-block;
       width: 20px; height: 1px;
-      background: var(--muted);
+      background: var(--accent2);
     }
 
     .esq-meio h1 {
@@ -102,6 +132,7 @@
       font-size: clamp(32px, 3vw, 46px);
       line-height: 1.15;
       margin-bottom: 20px;
+      animation: fadeSlideUp 0.7s ease-out 0.25s both;
     }
 
     .esq-meio h1 em {
@@ -114,6 +145,29 @@
       font-size: 14px;
       line-height: 1.8;
       max-width: 360px;
+      animation: fadeSlideUp 0.7s ease-out 0.35s both;
+    }
+
+    /* Silhueta do carro */
+    .car-illustration {
+      position: relative;
+      z-index: 1;
+      margin-top: 32px;
+      animation: fadeSlideUp 0.8s ease-out 0.45s both;
+    }
+
+    .car-illustration svg {
+      width: 100%;
+      max-width: 420px;
+      height: auto;
+      opacity: 0.5;
+      filter: drop-shadow(0 0 20px rgba(0,217,126,0.15));
+      transition: opacity 0.4s ease, filter 0.4s ease;
+    }
+
+    .car-illustration:hover svg {
+      opacity: 0.7;
+      filter: drop-shadow(0 0 30px rgba(0,217,126,0.25));
     }
 
     .esq-stats {
@@ -123,23 +177,76 @@
       z-index: 1;
       border-top: 1px solid var(--border);
       padding-top: 28px;
+      animation: fadeSlideUp 0.7s ease-out 0.55s both;
     }
 
-    .estat { display: flex; flex-direction: column; gap: 3px; }
-    .estat-n { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; }
-    .estat-l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .estat {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
 
-    /* LADO DIREITO — formulário */
+    .estat-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .estat-top i {
+      font-size: 16px;
+      color: var(--accent);
+      opacity: 0.7;
+    }
+
+    .estat-n {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .estat-l {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ═══════════════════════════════════════════
+       LADO DIREITO — formulário
+       ═══════════════════════════════════════════ */
     .lado-dir {
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 48px 32px;
+      position: relative;
+    }
+
+    /* Glow sutil atrás do card */
+    .lado-dir::before {
+      content: '';
+      position: absolute;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,217,126,0.04) 0%, transparent 70%);
+      pointer-events: none;
     }
 
     .login-box {
       width: 100%;
-      max-width: 380px;
+      max-width: 400px;
+      animation: fadeScale 0.6s ease-out 0.2s both;
+    }
+
+    /* Card glassmorphism */
+    .login-card {
+      background: rgba(26, 26, 29, 0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 36px 32px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
     }
 
     .login-titulo {
@@ -151,7 +258,7 @@
     .login-sub {
       font-size: 13px;
       color: var(--muted);
-      margin-bottom: 36px;
+      margin-bottom: 32px;
     }
 
     /* Campos */
@@ -159,7 +266,7 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     .field label {
@@ -175,29 +282,39 @@
 
     .input-wrap i {
       position: absolute;
-      left: 12px;
+      left: 14px;
       top: 50%;
       transform: translateY(-50%);
       font-size: 16px;
       color: var(--muted);
       pointer-events: none;
+      transition: color 0.3s;
     }
 
     .input-wrap input {
       width: 100%;
-      padding: 11px 12px 11px 38px;
-      background: var(--dark3);
+      padding: 12px 14px 12px 42px;
+      background: rgba(255,255,255,0.04);
       border: 1.5px solid var(--border);
-      border-radius: 8px;
+      border-radius: 10px;
       font-family: 'Inter', sans-serif;
       font-size: 14px;
       color: var(--txt);
       outline: none;
-      transition: border-color 0.2s;
+      transition: all 0.3s ease;
     }
 
-    .input-wrap input:focus { border-color: #ffffff40; }
-    .input-wrap input::placeholder { color: var(--muted); }
+    .input-wrap input:focus {
+      border-color: var(--accent);
+      background: rgba(0,217,126,0.03);
+      box-shadow: 0 0 0 3px rgba(0,217,126,0.08);
+    }
+
+    .input-wrap:focus-within > i:first-child {
+      color: var(--accent);
+    }
+
+    .input-wrap input::placeholder { color: #666; }
 
     /* Toggle senha */
     .toggle-senha {
@@ -210,10 +327,14 @@
       color: var(--muted);
       cursor: pointer;
       font-size: 16px;
-      padding: 0;
+      padding: 4px;
       display: flex;
       align-items: center;
+      transition: color 0.2s;
+      border-radius: 4px;
     }
+
+    .toggle-senha:hover { color: var(--txt); }
 
     /* Lembrar + esqueci */
     .login-opcoes {
@@ -223,6 +344,7 @@
       margin-bottom: 24px;
     }
 
+    /* Checkbox customizado */
     .lembrar {
       display: flex;
       align-items: center;
@@ -231,9 +353,41 @@
       color: var(--muted);
       cursor: pointer;
       user-select: none;
+      transition: color 0.2s;
     }
 
-    .lembrar input { cursor: pointer; accent-color: var(--txt); }
+    .lembrar:hover { color: var(--txt); }
+
+    .lembrar input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      background: rgba(255,255,255,0.04);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .lembrar input[type="checkbox"]:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .lembrar input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      left: 4.5px;
+      top: 1.5px;
+      width: 5px;
+      height: 9px;
+      border: solid var(--dark);
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
 
     .esqueci {
       font-size: 13px;
@@ -246,16 +400,16 @@
       font-family: 'Inter', sans-serif;
     }
 
-    .esqueci:hover { color: var(--txt); }
+    .esqueci:hover { color: var(--accent); }
 
     /* Botão entrar */
     .btn-entrar {
       width: 100%;
-      background: var(--txt);
-      color: var(--dark);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
       border: none;
-      border-radius: 8px;
-      padding: 13px;
+      border-radius: 10px;
+      padding: 14px;
       font-family: 'Inter', sans-serif;
       font-size: 14px;
       font-weight: 700;
@@ -264,12 +418,40 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: opacity 0.2s;
+      transition: all 0.3s ease;
       letter-spacing: 0.3px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,217,126,0.2);
     }
 
-    .btn-entrar:hover { opacity: 0.88; }
-    .btn-entrar:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-entrar::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .btn-entrar:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(0,217,126,0.3);
+    }
+
+    .btn-entrar:hover::before { opacity: 1; }
+
+    .btn-entrar:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 10px rgba(0,217,126,0.2);
+    }
+
+    .btn-entrar:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
 
     /* Loading spinner */
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -279,17 +461,18 @@
     .msg {
       display: none;
       padding: 12px 14px;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 13px;
       font-weight: 500;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
       align-items: center;
       gap: 8px;
+      animation: fadeSlideUp 0.3s ease-out;
     }
 
     .msg.show { display: flex; }
-    .msg.erro  { background: #fef2f2; color: var(--red); border: 1px solid #fecaca; }
-    .msg.ok    { background: #f0fdf4; color: var(--green); border: 1px solid #bbf7d0; }
+    .msg.erro  { background: rgba(220,38,38,0.1); color: #f87171; border: 1px solid rgba(220,38,38,0.2); }
+    .msg.ok    { background: rgba(0,217,126,0.1); color: var(--accent); border: 1px solid rgba(0,217,126,0.2); }
 
     /* Modal esqueci senha */
     .modal-overlay {
@@ -297,6 +480,7 @@
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
       z-index: 100;
       align-items: center;
       justify-content: center;
@@ -308,10 +492,12 @@
     .modal-box {
       background: var(--dark2);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 28px;
+      border-radius: 16px;
+      padding: 32px;
       width: 100%;
-      max-width: 380px;
+      max-width: 400px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+      animation: fadeScale 0.3s ease-out;
     }
 
     .modal-titulo {
@@ -329,8 +515,8 @@
 
     .modal-btns {
       display: flex;
-      gap: 8px;
-      margin-top: 16px;
+      gap: 10px;
+      margin-top: 18px;
     }
 
     .btn-cancelar {
@@ -338,8 +524,8 @@
       background: transparent;
       color: var(--muted);
       border: 1.5px solid var(--border);
-      border-radius: 8px;
-      padding: 11px;
+      border-radius: 10px;
+      padding: 12px;
       font-family: 'Inter', sans-serif;
       font-size: 13px;
       cursor: pointer;
@@ -350,32 +536,71 @@
 
     .btn-enviar {
       flex: 1;
-      background: var(--txt);
-      color: var(--dark);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
       border: none;
-      border-radius: 8px;
-      padding: 11px;
+      border-radius: 10px;
+      padding: 12px;
       font-family: 'Inter', sans-serif;
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(0,217,126,0.2);
     }
 
-    .btn-enviar:hover { opacity: 0.88; }
+    .btn-enviar:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0,217,126,0.3);
+    }
 
     .rodape-login {
-      margin-top: 28px;
+      margin-top: 24px;
       text-align: center;
       font-size: 12px;
       color: var(--muted);
+      line-height: 1.8;
     }
 
-    /* Responsivo */
+    .rodape-login a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .rodape-login a:hover { color: var(--accent); }
+
+    /* ═══════════════════════════════════════════
+       ANIMAÇÕES DE ENTRADA
+       ═══════════════════════════════════════════ */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeSlideDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeScale {
+      from { opacity: 0; transform: scale(0.96); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    /* ═══════════════════════════════════════════
+       RESPONSIVO
+       ═══════════════════════════════════════════ */
+    @media (max-width: 900px) {
+      .car-illustration svg { max-width: 300px; }
+      .esq-stats { gap: 24px; }
+    }
+
     @media (max-width: 700px) {
       body { grid-template-columns: 1fr; }
       .lado-esq { display: none; }
       .lado-dir { padding: 40px 24px; }
+      .login-card { padding: 28px 24px; }
     }
   </style>
 </head>
@@ -383,72 +608,145 @@
 
   <!-- LADO ESQUERDO -->
   <div class="lado-esq">
+    <div class="dot-grid"></div>
     <div class="esq-logo">REVENDA<span>OS</span></div>
     <div class="esq-meio">
       <div class="esq-tag">Painel de gestão</div>
       <h1>Gerencie sua<br>revenda com <em>total<br>controle.</em></h1>
       <p>Estoque em tempo real, controle financeiro, metas, comissões e CRM — tudo num só lugar, de qualquer dispositivo.</p>
+
+      <!-- Silhueta do carro -->
+      <div class="car-illustration">
+        <svg viewBox="0 0 480 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Silhueta lateral de um automóvel">
+          <!-- Linha do chão -->
+          <line x1="38" y1="165" x2="452" y2="165" stroke="#00d97e" stroke-opacity="0.12" stroke-width="1"/>
+
+          <!-- Silhueta contínua: frente à direita, traseira à esquerda -->
+          <path d="M48 139 Q48 124 61 119 L102 108 L143 78 Q154 67 171 64 L287 64 Q305 65 318 75 L366 108 L405 115 Q425 119 434 132 L440 141 Q443 150 434 153 L416 153
+                   M315 153 L185 153 M84 153 L66 153 Q48 151 48 139 Z"
+                stroke="url(#carGrad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="#00d97e" fill-opacity="0.025"/>
+
+          <!-- Vidros proporcionais ao teto -->
+          <path d="M151 105 L171 80 Q177 75 188 75 L230 75 L230 105 Z"
+                stroke="url(#carGrad)" stroke-width="1.1" stroke-linejoin="round" fill="#00d97e" fill-opacity="0.05"/>
+          <path d="M241 75 L286 75 Q296 76 304 84 L330 105 L241 105 Z"
+                stroke="url(#carGrad)" stroke-width="1.1" stroke-linejoin="round" fill="#00d97e" fill-opacity="0.05"/>
+          <line x1="236" y1="75" x2="236" y2="106" stroke="url(#carGrad)" stroke-width="1.6" opacity="0.7"/>
+
+          <!-- Linhas que dão leitura de carro -->
+          <path d="M61 119 L132 119 L151 112 L368 112 L405 115" stroke="url(#carGrad)" stroke-width="0.8" stroke-linecap="round" opacity="0.55"/>
+          <path d="M187 116 L187 143 M314 116 L314 143" stroke="url(#carGrad)" stroke-width="0.8" opacity="0.4"/>
+          <path d="M257 121 L274 121" stroke="url(#carGrad)" stroke-width="2" stroke-linecap="round" opacity="0.65"/>
+          <path d="M142 78 Q200 52 286 64" stroke="url(#carGrad)" stroke-width="1.2" stroke-linecap="round" opacity="0.45"/>
+
+          <!-- Arcos de roda alinhados à carroceria -->
+          <path d="M84 153 A51 51 0 0 1 185 153 M315 153 A51 51 0 0 1 416 153" stroke="url(#carGrad)" stroke-width="2.2" stroke-linecap="round"/>
+
+          <!-- Rodas -->
+          <g stroke="url(#carGrad)" fill="#071b16">
+            <circle cx="134" cy="153" r="29" stroke-width="2"/>
+            <circle cx="134" cy="153" r="18" stroke-width="1" opacity="0.7"/>
+            <circle cx="134" cy="153" r="5" stroke-width="1.5" fill="#00d97e" fill-opacity="0.35"/>
+            <circle cx="366" cy="153" r="29" stroke-width="2"/>
+            <circle cx="366" cy="153" r="18" stroke-width="1" opacity="0.7"/>
+            <circle cx="366" cy="153" r="5" stroke-width="1.5" fill="#00d97e" fill-opacity="0.35"/>
+          </g>
+          <g stroke="#00d97e" stroke-width="1" stroke-linecap="round" opacity="0.45">
+            <path d="M134 137 V145 M134 161 V169 M118 153 H126 M142 153 H150"/>
+            <path d="M366 137 V145 M366 161 V169 M350 153 H358 M374 153 H382"/>
+          </g>
+
+          <!-- Lanternas e farol dianteiro -->
+          <path d="M50 130 L63 128 L59 138 L49 138" stroke="#fb7185" stroke-width="2" stroke-linejoin="round" fill="#fb7185" fill-opacity="0.18"/>
+          <path d="M425 128 L437 134 L440 141 L426 139 Z" stroke="#00d97e" stroke-width="2" stroke-linejoin="round" fill="#00d97e" fill-opacity="0.22"/>
+          <path d="M442 135 L470 130 M443 140 L474 140 M442 145 L470 150" stroke="#00d97e" stroke-width="0.7" stroke-linecap="round" opacity="0.35"/>
+
+          <!-- Retrovisor -->
+          <path d="M319 104 L326 99 L334 101 L330 106 Z" stroke="url(#carGrad)" stroke-width="1.2" stroke-linejoin="round" fill="#00d97e" fill-opacity="0.1"/>
+
+          <defs>
+            <linearGradient id="carGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.3"/>
+              <stop offset="30%" stop-color="var(--accent)" stop-opacity="0.7"/>
+              <stop offset="60%" stop-color="var(--accent)" stop-opacity="0.9"/>
+              <stop offset="100%" stop-color="var(--accent2)" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
     </div>
     <div class="esq-stats">
-      <div class="estat"><div class="estat-n">7</div><div class="estat-l">Módulos</div></div>
-      <div class="estat"><div class="estat-n">100%</div><div class="estat-l">Online</div></div>
-      <div class="estat"><div class="estat-n">24h</div><div class="estat-l">Disponível</div></div>
+      <div class="estat">
+        <div class="estat-top"><i class="ti ti-layout-grid"></i><div class="estat-n">7</div></div>
+        <div class="estat-l">Módulos</div>
+      </div>
+      <div class="estat">
+        <div class="estat-top"><i class="ti ti-world"></i><div class="estat-n">100%</div></div>
+        <div class="estat-l">Online</div>
+      </div>
+      <div class="estat">
+        <div class="estat-top"><i class="ti ti-clock-24"></i><div class="estat-n">24h</div></div>
+        <div class="estat-l">Disponível</div>
+      </div>
     </div>
   </div>
 
   <!-- LADO DIREITO -->
   <div class="lado-dir">
     <div class="login-box">
+      <div class="login-card">
 
-      <div class="login-titulo">Bem-vindo de volta</div>
-      <div class="login-sub">Entre com seu email e senha para acessar o painel.</div>
+        <div class="login-titulo">Bem-vindo de volta</div>
+        <div class="login-sub">Entre com seu email e senha para acessar o painel.</div>
 
-      <!-- Mensagem de erro/sucesso -->
-      <div class="msg erro" id="msg-erro">
-        <i class="ti ti-alert-circle"></i>
-        <span id="msg-erro-txt">Email ou senha incorretos.</span>
-      </div>
-      <div class="msg ok" id="msg-ok">
-        <i class="ti ti-check"></i>
-        <span id="msg-ok-txt">Link enviado! Verifique seu email.</span>
-      </div>
-
-      <!-- Formulário -->
-      <div class="field">
-        <label>Email</label>
-        <div class="input-wrap">
-          <i class="ti ti-mail"></i>
-          <input type="email" id="inp-email" placeholder="seu@email.com" autocomplete="email"/>
+        <!-- Mensagem de erro/sucesso -->
+        <div class="msg erro" id="msg-erro">
+          <i class="ti ti-alert-circle"></i>
+          <span id="msg-erro-txt">Email ou senha incorretos.</span>
         </div>
-      </div>
-
-      <div class="field">
-        <label>Senha</label>
-        <div class="input-wrap">
-          <i class="ti ti-lock"></i>
-          <input type="password" id="inp-senha" placeholder="••••••••" autocomplete="current-password"/>
-          <button class="toggle-senha" onclick="toggleSenha()" type="button" id="btn-olho">
-            <i class="ti ti-eye" id="icone-olho"></i>
-          </button>
+        <div class="msg ok" id="msg-ok">
+          <i class="ti ti-check"></i>
+          <span id="msg-ok-txt">Link enviado! Verifique seu email.</span>
         </div>
-      </div>
 
-      <div class="login-opcoes">
-        <label class="lembrar">
-          <input type="checkbox" id="chk-lembrar"/> Continuar conectado
-        </label>
-        <button class="esqueci" onclick="abrirRecuperar()">Esqueci minha senha</button>
-      </div>
+        <!-- Formulário -->
+        <div class="field">
+          <label>Email</label>
+          <div class="input-wrap">
+            <i class="ti ti-mail"></i>
+            <input type="email" id="inp-email" placeholder="seu@email.com" autocomplete="email"/>
+          </div>
+        </div>
 
-      <button class="btn-entrar" id="btn-entrar" onclick="entrar()">
-        <i class="ti ti-login"></i> Entrar no painel
-      </button>
+        <div class="field">
+          <label>Senha</label>
+          <div class="input-wrap">
+            <i class="ti ti-lock"></i>
+            <input type="password" id="inp-senha" placeholder="••••••••" autocomplete="current-password"/>
+            <button class="toggle-senha" onclick="toggleSenha()" type="button" id="btn-olho">
+              <i class="ti ti-eye" id="icone-olho"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="login-opcoes">
+          <label class="lembrar">
+            <input type="checkbox" id="chk-lembrar"/> Continuar conectado
+          </label>
+          <button class="esqueci" onclick="abrirRecuperar()">Esqueci minha senha</button>
+        </div>
+
+        <button class="btn-entrar" id="btn-entrar" onclick="entrar()">
+          <i class="ti ti-login"></i> Entrar no painel
+        </button>
+
+      </div>
 
       <div class="rodape-login">
         Problemas para acessar? Fale com o suporte.<br/>
-        <a href="privacidade.html" style="color:var(--muted)">Política de Privacidade</a>
+        <a href="privacidade.html">Política de Privacidade</a>
         &nbsp;·&nbsp;
-        <a href="termos.html" style="color:var(--muted)">Termos de Uso</a>
+        <a href="termos.html">Termos de Uso</a>
       </div>
 
     </div>
