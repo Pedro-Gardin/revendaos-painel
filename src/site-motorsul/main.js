@@ -18,6 +18,7 @@ import { collection, doc, getDoc, query, orderBy, onSnapshot } from 'firebase/fi
 const ORG_SLUG = 'motorsul-espumoso';
 
 let todosCarros = [];
+let carrosVendidos = [];
 let filtroMarca = '';
 let filtroModelo = '';
 let filtroPreco = '';
@@ -49,7 +50,9 @@ async function iniciarSite() {
   );
 
   onSnapshot(carrosQuery, snap => {
-    todosCarros = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.status !== 'vendido');
+    const todos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    todosCarros = todos.filter(c => c.status !== 'vendido');
+    carrosVendidos = todos.filter(c => c.status === 'vendido');
     montarFiltrosMarca();
     render();
   }, () => {
@@ -114,11 +117,17 @@ function render() {
   document.querySelector('#vehicle-count').textContent =
     `${itens.length} veículo${itens.length === 1 ? '' : 's'} disponível${itens.length === 1 ? '' : 'is'}`;
 
-  document.querySelector('#sold-grid').innerHTML = todosCarros.slice(0, 6).map(c => `
-    <div class="sold-card">
-      <img src="${escUrl(c.fotos?.[0]) || ''}" alt="${esc(c.marca)} ${esc(c.modelo)}">
-      <span>${esc(c.marca)} ${esc(c.modelo)}</span>
-    </div>`).join('');
+  const secaoVendidos = document.querySelector('#vendidos');
+  if (carrosVendidos.length) {
+    secaoVendidos.style.display = '';
+    document.querySelector('#sold-grid').innerHTML = carrosVendidos.slice(0, 6).map(c => `
+      <div class="sold-card">
+        <img src="${escUrl(c.fotos?.[0]) || ''}" alt="${esc(c.marca)} ${esc(c.modelo)}">
+        <span>${esc(c.marca)} ${esc(c.modelo)}</span>
+      </div>`).join('');
+  } else {
+    secaoVendidos.style.display = 'none';
+  }
 }
 
 function cardHTML(c) {
