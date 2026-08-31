@@ -63,7 +63,6 @@ async function iniciarSite() {
 function aplicarBrandingDaRevenda(org) {
   if (org.nome) {
     document.title = `${org.nome} | Veículos selecionados`;
-    document.querySelectorAll('.brand strong').forEach(el => el.textContent = org.nome.toUpperCase());
   }
 }
 
