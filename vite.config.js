@@ -19,7 +19,9 @@ export default defineConfig({
         termos: resolve(__dirname, 'painel/termos.html'),
         site: resolve(__dirname, 'site/index.html'),
         siteMotorsul: resolve(__dirname, 'site-motorsul/index.html'),
-        siteMotorsulDetalhes: resolve(__dirname, 'site-motorsul/detalhes.html')
+        siteMotorsulDetalhes: resolve(__dirname, 'site-motorsul/detalhes.html'),
+        siteAutoCerto: resolve(__dirname, 'site-autocerto/index.html'),
+        siteAutoCertoDetalhes: resolve(__dirname, 'site-autocerto/detalhes.html')
       }
     }
   }
