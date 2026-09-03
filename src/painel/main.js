@@ -50,8 +50,15 @@ let fotosExistentes = [];    // URLs já salvas do carro em edição
 // ─── UTILITÁRIOS ─────────────────────────────
 function getEmoji(m)  { return EMOJIS[m] || '🚗'; }
 function fmt(n)       { return 'R$ ' + Math.round(n).toLocaleString('pt-BR'); }
-function hojeISO()    { return new Date().toISOString().slice(0,10); }
-function fmtData(iso) { return iso.split('-').reverse().join('/'); }
+function hojeISO() {
+  // toISOString usa UTC e, no fim do dia no Brasil, podia lançar o
+  // movimento no dia/mês seguinte.
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function fmtData(iso) { return typeof iso === 'string' ? iso.split('-').reverse().join('/') : 'Sem data'; }
+function dataLancamentoValida(l) { return typeof l.data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(l.data); }
+function valorLancamento(l) { return Number(l.val) || 0; }
 
 // Calcula há quanto tempo o carro está cadastrado, a partir do
 // campo criadoEm (Timestamp do Firestore). Logo após criar um
@@ -257,14 +264,22 @@ async function sincronizarVendaFinanceiro(carroId, novoStatus, carro) {
       await addDoc(colFinanceiro, {
         tipo:'receita', desc:`Venda ${carro.marca} ${carro.modelo} ${carro.ano}`,
         cat:'Venda de veículo', val:parseMoeda(carro.preco), data:hojeISO(),
-        carroId, criadoEm: serverTimestamp()
+        carroId, origem:'venda_veiculo', criadoEm: serverTimestamp()
       });
+    } else {
+      // A edição de preço/dados do veículo precisa refletir na venda já criada.
+      await updateDoc(snap.docs[0].ref, {
+        desc:`Venda ${carro.marca} ${carro.modelo} ${carro.ano}`,
+        val:parseMoeda(carro.preco), origem:'venda_veiculo'
+      });
+      // Corrige duplicidades deixadas por versões anteriores do painel.
+      await Promise.all(snap.docs.slice(1).map(d => deleteDoc(d.ref)));
     }
   } else if (!snap.empty) {
     // Voltou pra disponível/reservado depois de ter sido marcado
     // como vendido — remove a receita, senão fica contando venda
     // de um carro que não está mais vendido.
-    await deleteDoc(snap.docs[0].ref);
+    await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
   }
 }
 
@@ -337,7 +352,9 @@ async function sincronizarCustoFinanceiro(carroId, custoNovo, marca, modelo, ano
       await updateDoc(lancamentoRef, {
         val: custoNovo,
         desc: `Compra ${marca} ${modelo} ${ano}`,
+        origem: 'compra_veiculo',
       });
+      await Promise.all(snap.docs.slice(1).map(d => deleteDoc(d.ref)));
     } else {
       await deleteDoc(lancamentoRef);
     }
@@ -347,7 +364,7 @@ async function sincronizarCustoFinanceiro(carroId, custoNovo, marca, modelo, ano
     await addDoc(colFinanceiro, {
       tipo:'despesa', desc:`Compra ${marca} ${modelo} ${ano}`,
       cat:'Compra de veículo', val:custoNovo, data:hojeISO(),
-      carroId, criadoEm: serverTimestamp()
+      carroId, origem:'compra_veiculo', criadoEm: serverTimestamp()
     });
   }
 }
@@ -392,6 +409,7 @@ async function salvarCarro() {
     if (editando) {
       await updateDoc((await orgDoc('carros',carroEditando)), carro);
       await sincronizarCustoFinanceiro(carroEditando, custo, marca, modelo, ano);
+      await sincronizarVendaFinanceiro(carroEditando, carro.status, carro);
       toast('Veículo atualizado!');
     } else {
       carro.criadoEm = serverTimestamp();
@@ -403,10 +421,11 @@ async function salvarCarro() {
         await addDoc(colFinanceiro, {
           tipo:'despesa', desc:`Compra ${marca} ${modelo} ${ano}`,
           cat:'Compra de veículo', val:custo, data:hojeISO(),
-          carroId: ref.id,
+          carroId: ref.id, origem:'compra_veiculo',
           criadoEm: serverTimestamp()
         });
       }
+      await sincronizarVendaFinanceiro(ref.id, carro.status, carro);
       toast('Veículo salvo! Site já atualizado.');
     }
 
@@ -580,8 +599,12 @@ async function salvarGasto() {
   const nomeC = carro ? `${carro.marca} ${carro.modelo} ${carro.ano}` : 'Veículo';
 
   try {
-    await addDoc(colGastos, { carroId:custoCarroAtivo, tipo, desc:desc||tipo, val, criadoEm:serverTimestamp() });
-    await addDoc(colFinanceiro, { tipo:'despesa', desc:`${tipo} — ${nomeC}`, cat:'Manutenção veículo', val, data:hojeISO(), carroId:custoCarroAtivo, criadoEm:serverTimestamp() });
+    const gastoRef = await addDoc(colGastos, { carroId:custoCarroAtivo, tipo, desc:desc||tipo, val, criadoEm:serverTimestamp() });
+    await addDoc(colFinanceiro, {
+      tipo:'despesa', desc:`${tipo} — ${nomeC}`, cat:'Manutenção veículo', val,
+      data:hojeISO(), carroId:custoCarroAtivo, gastoId:gastoRef.id,
+      origem:'gasto_veiculo', criadoEm:serverTimestamp()
+    });
     toast('Gasto salvo e lançado no financeiro!');
     fecharCustoForm();
     renderCustos();
@@ -590,7 +613,13 @@ async function salvarGasto() {
 
 async function removerGasto(id) {
   if (!confirm('Remover este gasto?')) return;
-  try { await deleteDoc((await orgDoc('gastos',id))); renderCustos(); toast('Gasto removido'); }
+  try {
+    const lancamentosGasto = await getDocs(query(colFinanceiro, where('gastoId', '==', id)));
+    await Promise.all(lancamentosGasto.docs.map(d => deleteDoc(d.ref)));
+    await deleteDoc((await orgDoc('gastos',id)));
+    renderCustos();
+    toast('Gasto removido');
+  }
   catch(e) { toast('Erro','erro'); }
 }
 
@@ -603,6 +632,11 @@ function iniciarListenerFinanceiro() {
     lancamentos = snap.docs.map(d=>({id:d.id,...d.data()}));
     populaMeses();
     renderFinanceiro();
+    setStatus(true);
+  }, erro => {
+    console.error('Erro ao carregar o financeiro:', erro);
+    setStatus(false);
+    toast('Não foi possível carregar o financeiro.', 'erro');
   });
 }
 
@@ -617,7 +651,7 @@ function setTipo(t) {
 function populaMeses() {
   const sel   = document.getElementById('fin-mes');
   const atual = sel.value;
-  const meses = [...new Set(lancamentos.map(l=>l.data.slice(0,7)))].sort().reverse();
+  const meses = [...new Set(lancamentos.filter(dataLancamentoValida).map(l=>l.data.slice(0,7)))].sort().reverse();
   sel.innerHTML = '<option value="todos">Todos os períodos</option>'+
     meses.map(m=>`<option value="${escAttr(m)}">${esc(mesLabel(m))}</option>`).join('');
   if (meses.includes(atual)) sel.value=atual;
@@ -626,9 +660,9 @@ function populaMeses() {
 
 function renderFinanceiro() {
   const mes   = document.getElementById('fin-mes').value;
-  const lista = mes==='todos' ? lancamentos : lancamentos.filter(l=>l.data.startsWith(mes));
-  const rec   = lista.filter(l=>l.tipo==='receita').reduce((s,l)=>s+l.val,0);
-  const des   = lista.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+l.val,0);
+  const lista = mes==='todos' ? lancamentos : lancamentos.filter(l=>dataLancamentoValida(l) && l.data.startsWith(mes));
+  const rec   = lista.filter(l=>l.tipo==='receita').reduce((s,l)=>s+valorLancamento(l),0);
+  const des   = lista.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+valorLancamento(l),0);
   const sal   = rec-des;
   const mar   = rec>0?Math.round(sal/rec*100):0;
 
@@ -639,7 +673,7 @@ function renderFinanceiro() {
   document.getElementById('fin-mar').textContent = mar+'%';
 
   const totCat={};
-  lista.filter(l=>l.tipo==='despesa').forEach(l=>{ totCat[l.cat]=(totCat[l.cat]||0)+l.val; });
+  lista.filter(l=>l.tipo==='despesa').forEach(l=>{ totCat[l.cat]=(totCat[l.cat]||0)+valorLancamento(l); });
   const top5 = Object.entries(totCat).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const maxV = top5.length?top5[0][1]:1;
   document.getElementById('fin-barras').innerHTML = top5.length
@@ -663,13 +697,13 @@ function renderFinanceiro() {
 
   const listaEl = document.getElementById('fin-lista');
   if (!lista.length) { listaEl.innerHTML=`<div class="empty-state"><i class="ti ti-receipt-off"></i><p>Nenhum lançamento no período.</p></div>`; return; }
-  listaEl.innerHTML = [...lista].sort((a,b)=>b.data.localeCompare(a.data)).map(l=>`
+  listaEl.innerHTML = [...lista].sort((a,b)=>(b.data || '').localeCompare(a.data || '')).map(l=>`
     <div class="lanc-row">
       <div class="lanc-icon ${l.tipo==='receita'?'rec':'des'}"><i class="ti ti-${l.tipo==='receita'?'arrow-up':'arrow-down'}"></i></div>
       <div class="lanc-desc"><div class="lanc-nome">${esc(l.desc)}</div><div class="lanc-cat">${esc(l.cat)}</div></div>
       <div class="lanc-data">${esc(fmtData(l.data))}</div>
-      <div class="lanc-val ${l.tipo==='receita'?'rec':'des'}">${l.tipo==='receita'?'+':'-'}${fmt(l.val)}</div>
-      <button class="lanc-del" onclick="removerLanc('${escAttr(l.id)}')"><i class="ti ti-trash"></i></button>
+      <div class="lanc-val ${l.tipo==='receita'?'rec':'des'}">${l.tipo==='receita'?'+':'-'}${fmt(valorLancamento(l))}</div>
+      ${l.origem ? '<span title="Lançamento automático" style="color:var(--muted);font-size:11px">Automático</span>' : `<button class="lanc-del" onclick="removerLanc('${escAttr(l.id)}')"><i class="ti ti-trash"></i></button>`}
     </div>`).join('');
 }
 
@@ -715,12 +749,12 @@ async function renderMeta() {
     const snap = await getDoc((await orgDoc('metas',mes)));
     if (!snap.exists()) { document.getElementById('meta-progress').innerHTML=''; return; }
     const meta = snap.data();
-    const recMes  = lancamentos.filter(l=>l.tipo==='receita'&&l.data.startsWith(mes)).reduce((s,l)=>s+l.val,0);
+    const recMes  = lancamentos.filter(l=>l.tipo==='receita'&&dataLancamentoValida(l)&&l.data.startsWith(mes)).reduce((s,l)=>s+valorLancamento(l),0);
     // Antes contava TODOS os carros com status="vendido", de
     // qualquer mês. Agora conta só as vendas lançadas no
     // financeiro DENTRO do mês selecionado (mesma lógica do
     // relatório) — assim a meta de unidades reflete o período certo.
-    const vendMes = lancamentos.filter(l=>l.tipo==='receita'&&l.cat==='Venda de veículo'&&l.data.startsWith(mes)).length;
+    const vendMes = lancamentos.filter(l=>l.tipo==='receita'&&l.cat==='Venda de veículo'&&dataLancamentoValida(l)&&l.data.startsWith(mes)).length;
     const pctFat  = meta.valor>0 ? Math.min(Math.round(recMes/meta.valor*100),100) : 0;
     const pctVend = meta.unidades>0 ? Math.min(Math.round(vendMes/meta.unidades*100),100) : 0;
     document.getElementById('meta-progress').innerHTML=`
@@ -791,8 +825,8 @@ async function lancarComissao() {
   if (!vend) return;
   const comissaoVal = Math.round(venda*(vend.comissao/100));
   try {
-    await addDoc(colComissoes, { vendedorId:vendId, vendedorNome:vend.nome, venda, comissaoVal, comissaoPct:vend.comissao, data:hojeISO(), criadoEm:serverTimestamp() });
-    await addDoc(colFinanceiro, { tipo:'despesa', desc:`Comissão ${vend.nome}`, cat:'Salário / Comissão', val:comissaoVal, data:hojeISO(), criadoEm:serverTimestamp() });
+    const comissaoRef = await addDoc(colComissoes, { vendedorId:vendId, vendedorNome:vend.nome, venda, comissaoVal, comissaoPct:vend.comissao, data:hojeISO(), criadoEm:serverTimestamp() });
+    await addDoc(colFinanceiro, { tipo:'despesa', desc:`Comissão ${vend.nome}`, cat:'Salário / Comissão', val:comissaoVal, data:hojeISO(), comissaoId:comissaoRef.id, origem:'comissao', criadoEm:serverTimestamp() });
     document.getElementById('vend-val-venda').value='';
     toast(`Comissão de ${fmt(comissaoVal)} lançada para ${vend.nome}!`);
     renderComissoes();
@@ -822,7 +856,12 @@ function renderComissoes() {
 
 async function removerComissao(id) {
   if (!confirm('Remover comissão?')) return;
-  try { await deleteDoc((await orgDoc('comissoes',id))); toast('Removido'); }
+  try {
+    const lancamentosComissao = await getDocs(query(colFinanceiro, where('comissaoId', '==', id)));
+    await Promise.all(lancamentosComissao.docs.map(d => deleteDoc(d.ref)));
+    await deleteDoc((await orgDoc('comissoes',id)));
+    toast('Comissão removida');
+  }
   catch(e) { toast('Erro','erro'); }
 }
 
@@ -911,7 +950,7 @@ Object.assign(window, {
   abrirEdicao, buscarEstoque, irParaPaginaEstoque, ordenarEstoque,
   alterarStatus, excluirCarro,
   toggleCustoItem, abrirCustoForm, fecharCustoForm, salvarGasto, removerGasto,
-  setTipo, adicionarLanc, removerLanc, fmtCampo,
+  setTipo, adicionarLanc, removerLanc, renderFinanceiro, fmtCampo,
   salvarMeta, salvarVendedor, removerVendedor, lancarComissao, removerComissao,
   salvarLead, atualizarStatusLead, removerLead,
 });

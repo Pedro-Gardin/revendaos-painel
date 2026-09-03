@@ -21,7 +21,15 @@ function fmt(n) {
 }
 
 function fmtData(iso) {
-  return iso.split('-').reverse().join('/');
+  return typeof iso === 'string' ? iso.split('-').reverse().join('/') : 'Sem data';
+}
+
+function dataLancamentoValida(l) {
+  return typeof l.data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(l.data);
+}
+
+function valorLancamento(l) {
+  return Number(l.val) || 0;
 }
 
 function mesExtenso(yyyymm) {
@@ -65,7 +73,7 @@ async function carregarDados() {
 // ─── POPULAR SELECT DE MESES ─────────────────
 function populaMeses() {
   const sel   = document.getElementById('sel-mes');
-  const meses = [...new Set(lancamentos.map(l => l.data.slice(0, 7)))].sort().reverse();
+  const meses = [...new Set(lancamentos.filter(dataLancamentoValida).map(l => l.data.slice(0, 7)))].sort().reverse();
 
   sel.innerHTML = meses.map(m =>
     `<option value="${escAttr(m)}">${esc(mesExtenso(m))}</option>`
@@ -79,11 +87,11 @@ function renderRelatorio() {
   const mes   = document.getElementById('sel-mes').value;
   if (!mes) return;
 
-  const lista  = lancamentos.filter(l => l.data.startsWith(mes));
+  const lista  = lancamentos.filter(l => dataLancamentoValida(l) && l.data.startsWith(mes));
   const rec    = lista.filter(l => l.tipo === 'receita');
   const des    = lista.filter(l => l.tipo === 'despesa');
-  const totRec = rec.reduce((s, l) => s + l.val, 0);
-  const totDes = des.reduce((s, l) => s + l.val, 0);
+  const totRec = rec.reduce((s, l) => s + valorLancamento(l), 0);
+  const totDes = des.reduce((s, l) => s + valorLancamento(l), 0);
   const lucro  = totRec - totDes;
   const mar    = totRec > 0 ? Math.round((lucro / totRec) * 100) : 0;
 
@@ -117,7 +125,7 @@ function renderRelatorio() {
           <td><span class="badge badge-rec">${esc(l.cat)}</span></td>
           <td>${esc(l.desc)}</td>
           <td class="td-r" style="color:var(--muted)">${esc(fmtData(l.data))}</td>
-          <td class="td-r green"><strong>${fmt(l.val)}</strong></td>
+          <td class="td-r green"><strong>${fmt(valorLancamento(l))}</strong></td>
         </tr>`).join('');
   }
   document.getElementById('tot-rec').textContent = fmt(totRec);
@@ -134,7 +142,7 @@ function renderRelatorio() {
           <td><span class="badge badge-des">${esc(l.cat)}</span></td>
           <td>${esc(l.desc)}</td>
           <td class="td-r" style="color:var(--muted)">${esc(fmtData(l.data))}</td>
-          <td class="td-r red"><strong>${fmt(l.val)}</strong></td>
+          <td class="td-r red"><strong>${fmt(valorLancamento(l))}</strong></td>
         </tr>`).join('');
   }
   document.getElementById('tot-des').textContent = fmt(totDes);
