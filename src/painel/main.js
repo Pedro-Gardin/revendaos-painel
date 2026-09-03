@@ -242,16 +242,56 @@ function buscarEstoque(valor) {
   renderEstoque();
 }
 
+// Cria (ou remove) o lançamento de "Venda de veículo" no financeiro
+// conforme a situação do carro muda. Sem isso, marcar como vendido
+// não gerava receita nenhuma no financeiro/relatório.
+async function sincronizarVendaFinanceiro(carroId, novoStatus, carro) {
+  const snap = await getDocs(query(
+    colFinanceiro,
+    where('carroId', '==', carroId),
+    where('cat', '==', 'Venda de veículo')
+  ));
+
+  if (novoStatus === 'vendido') {
+    if (snap.empty) {
+      await addDoc(colFinanceiro, {
+        tipo:'receita', desc:`Venda ${carro.marca} ${carro.modelo} ${carro.ano}`,
+        cat:'Venda de veículo', val:parseMoeda(carro.preco), data:hojeISO(),
+        carroId, criadoEm: serverTimestamp()
+      });
+    }
+  } else if (!snap.empty) {
+    // Voltou pra disponível/reservado depois de ter sido marcado
+    // como vendido — remove a receita, senão fica contando venda
+    // de um carro que não está mais vendido.
+    await deleteDoc(snap.docs[0].ref);
+  }
+}
+
 async function alterarStatus(id, atual) {
   const ciclo  = ['disponivel','reservado','vendido'];
   const novo   = ciclo[(ciclo.indexOf(atual)+1)%3];
-  try { await updateDoc((await orgDoc('carros',id)), {status:novo}); toast('Situação: '+novo); }
+  try {
+    await updateDoc((await orgDoc('carros',id)), {status:novo});
+    const carro = carros.find(c => c.id === id);
+    if (carro) await sincronizarVendaFinanceiro(id, novo, carro);
+    toast('Situação: '+novo);
+  }
   catch(e) { toast('Erro ao atualizar','erro'); }
 }
 
 async function excluirCarro(id) {
   if (!confirm('Remover este veículo do estoque?')) return;
-  try { await deleteDoc((await orgDoc('carros',id))); toast('Veículo removido'); }
+  try {
+    // Remove também os lançamentos financeiros ligados a esse carro
+    // (compra e venda) — antes ficavam "órfãos" no financeiro depois
+    // do carro excluído, distorcendo o relatório pra sempre.
+    const snap = await getDocs(query(colFinanceiro, where('carroId', '==', id)));
+    await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+
+    await deleteDoc((await orgDoc('carros',id)));
+    toast('Veículo removido');
+  }
   catch(e) { toast('Erro ao remover','erro'); }
 }
 
