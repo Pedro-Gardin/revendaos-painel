@@ -3,7 +3,7 @@
 //  Mesma trava de ORG_SLUG fixo do main.js.
 // =============================================
 import { db } from '../shared/firebase.js';
-import { esc, escAttr, escUrl } from '../../../../../Downloads/painel-revenda-basemotors/painel-revenda/src/shared/seguranca.js';
+import { esc, escAttr, escUrl } from '../shared/seguranca.js';
 import { collection, doc, getDoc, getDocs, query, orderBy } from 'firebase/firestore';
 
 const ORG_SLUG = 'base-motors-espumoso'; // mesmo valor do main.js
