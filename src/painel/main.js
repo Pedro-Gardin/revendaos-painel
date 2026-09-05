@@ -612,7 +612,7 @@ async function salvarGasto() {
 }
 
 async function removerGasto(id) {
-  if (!confirm('Remover este gasto?')) return;
+  if (!confirm('Excluir este gasto? O lançamento correspondente no financeiro também será removido.')) return;
   try {
     const lancamentosGasto = await getDocs(query(colFinanceiro, where('gastoId', '==', id)));
     await Promise.all(lancamentosGasto.docs.map(d => deleteDoc(d.ref)));
@@ -697,13 +697,27 @@ function renderFinanceiro() {
 
   const listaEl = document.getElementById('fin-lista');
   if (!lista.length) { listaEl.innerHTML=`<div class="empty-state"><i class="ti ti-receipt-off"></i><p>Nenhum lançamento no período.</p></div>`; return; }
+  const acaoLancamento = l => {
+    // Gastos cadastrados em "Custo por veículo" também criam um
+    // lançamento automático no financeiro. Eles podem ser excluídos,
+    // mas a exclusão precisa remover os dois registros para não deixar
+    // um gasto órfão no custo do veículo.
+    if (l.origem === 'gasto_veiculo' && l.gastoId) {
+      return `<button class="lanc-del" title="Excluir gasto" aria-label="Excluir gasto" onclick="removerGasto('${escAttr(l.gastoId)}')"><i class="ti ti-trash"></i></button>`;
+    }
+    if (!l.origem) {
+      return `<button class="lanc-del" title="Excluir lançamento" aria-label="Excluir lançamento" onclick="removerLanc('${escAttr(l.id)}')"><i class="ti ti-trash"></i></button>`;
+    }
+    return '<span title="Lançamento automático" style="color:var(--muted);font-size:11px">Automático</span>';
+  };
+
   listaEl.innerHTML = [...lista].sort((a,b)=>(b.data || '').localeCompare(a.data || '')).map(l=>`
     <div class="lanc-row">
       <div class="lanc-icon ${l.tipo==='receita'?'rec':'des'}"><i class="ti ti-${l.tipo==='receita'?'arrow-up':'arrow-down'}"></i></div>
       <div class="lanc-desc"><div class="lanc-nome">${esc(l.desc)}</div><div class="lanc-cat">${esc(l.cat)}</div></div>
       <div class="lanc-data">${esc(fmtData(l.data))}</div>
       <div class="lanc-val ${l.tipo==='receita'?'rec':'des'}">${l.tipo==='receita'?'+':'-'}${fmt(valorLancamento(l))}</div>
-      ${l.origem ? '<span title="Lançamento automático" style="color:var(--muted);font-size:11px">Automático</span>' : `<button class="lanc-del" onclick="removerLanc('${escAttr(l.id)}')"><i class="ti ti-trash"></i></button>`}
+      ${acaoLancamento(l)}
     </div>`).join('');
 }
 
