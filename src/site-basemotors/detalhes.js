@@ -2,7 +2,7 @@
 //  SITE BASE MOTORS — detalhes.js
 //  Mesma trava de ORG_SLUG fixo do main.js.
 // =============================================
-import { db } from '../../../../../Downloads/painel-revenda-basemotors/painel-revenda/src/shared/firebase.js';
+import { db } from '../shared/firebase.js';
 import { esc, escAttr, escUrl } from '../../../../../Downloads/painel-revenda-basemotors/painel-revenda/src/shared/seguranca.js';
 import { collection, doc, getDoc, getDocs, query, orderBy } from 'firebase/firestore';
 
