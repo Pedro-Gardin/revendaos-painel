@@ -21,7 +21,9 @@ export default defineConfig({
         siteMotorsul: resolve(__dirname, 'site-motorsul/index.html'),
         siteMotorsulDetalhes: resolve(__dirname, 'site-motorsul/detalhes.html'),
         siteAutoCerto: resolve(__dirname, 'site-autocerto/index.html'),
-        siteAutoCertoDetalhes: resolve(__dirname, 'site-autocerto/detalhes.html')
+        siteAutoCertoDetalhes: resolve(__dirname, 'site-autocerto/detalhes.html'),
+        siteBaseMotors: resolve(__dirname, 'site-basemotors/index.html'),
+        siteBaseMotorsDetalhes: resolve(__dirname, 'site-basemotors/detalhes.html')
       }
     }
   }
