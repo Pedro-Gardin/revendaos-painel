@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contratos — RevendaOS</title>
+  <link rel="stylesheet" href="contratos.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- CONTROLES (não aparecem na impressão) -->
+  <div class="controles no-print">
+    <div class="controles-esq">
+      <a href="index.html" class="btn-voltar">
+        <i class="ti ti-arrow-left"></i> Voltar ao painel
+      </a>
+    </div>
+    <button class="btn-primary" id="btn-novo-contrato" onclick="abrirFormulario()">
+      <i class="ti ti-file-plus"></i> Novo contrato
+    </button>
+  </div>
+
+  <!-- ===================== LISTA DE CONTRATOS ===================== -->
+  <div class="contratos-lista-wrap no-print" id="view-lista">
+    <div class="contratos-card" id="lista-contratos">
+      <div class="contratos-vazio">Carregando contratos...</div>
+    </div>
+  </div>
+
+  <!-- ===================== FORMULÁRIO ===================== -->
+  <div class="form-wrap no-print" id="view-form" style="display:none">
+    <div class="form-card">
+
+      <div class="form-secao-titulo">Veículo</div>
+      <div class="campo full">
+        <label for="f-carro">Selecione o veículo</label>
+        <select id="f-carro" onchange="atualizarPreviewVeiculo()"></select>
+      </div>
+      <div class="form-veiculo-preview" id="preview-veiculo" style="margin-top:10px">
+        Selecione um veículo acima
+      </div>
+
+      <div class="form-secao-titulo">Dados do vendedor (revenda)</div>
+      <div class="form-grid">
+        <div class="campo full">
+          <label for="f-org-nome">Razão social / Nome da revenda</label>
+          <input type="text" id="f-org-nome" />
+        </div>
+        <div class="campo">
+          <label for="f-org-doc">CNPJ ou CPF</label>
+          <input type="text" id="f-org-doc" placeholder="00.000.000/0000-00" />
+        </div>
+        <div class="campo">
+          <label for="f-org-endereco">Endereço</label>
+          <input type="text" id="f-org-endereco" />
+        </div>
+      </div>
+
+      <div class="form-secao-titulo">Dados do comprador (cliente)</div>
+      <div class="form-grid">
+        <div class="campo full">
+          <label for="f-cli-nome">Nome completo</label>
+          <input type="text" id="f-cli-nome" />
+        </div>
+        <div class="campo">
+          <label for="f-cli-cpf">CPF</label>
+          <input type="text" id="f-cli-cpf" placeholder="000.000.000-00" />
+        </div>
+        <div class="campo">
+          <label for="f-cli-rg">RG</label>
+          <input type="text" id="f-cli-rg" />
+        </div>
+        <div class="campo full">
+          <label for="f-cli-endereco">Endereço completo</label>
+          <input type="text" id="f-cli-endereco" />
+        </div>
+        <div class="campo">
+          <label for="f-cli-telefone">Telefone</label>
+          <input type="text" id="f-cli-telefone" placeholder="(00) 00000-0000" />
+        </div>
+      </div>
+
+      <div class="form-secao-titulo">Condições da venda</div>
+      <div class="form-grid">
+        <div class="campo">
+          <label for="f-preco-venda">Valor da venda (R$)</label>
+          <input type="text" id="f-preco-venda" placeholder="0,00" />
+        </div>
+        <div class="campo">
+          <label for="f-forma-pagamento">Forma de pagamento</label>
+          <select id="f-forma-pagamento" onchange="alternarCamposPagamento()">
+            <option value="vista">À vista</option>
+            <option value="financiado">Financiado</option>
+            <option value="troca">Com veículo na troca</option>
+          </select>
+        </div>
+        <div class="campo full" id="campo-financiado" style="display:none">
+          <label for="f-financeira">Instituição financeira</label>
+          <input type="text" id="f-financeira" placeholder="Nome do banco / financeira" />
+        </div>
+        <div class="campo full" id="campo-troca" style="display:none">
+          <label for="f-veiculo-troca">Descrição do veículo dado como parte de pagamento</label>
+          <input type="text" id="f-veiculo-troca" placeholder="Marca, modelo, ano e placa" />
+        </div>
+        <div class="campo full">
+          <label for="f-obs">Observações adicionais (opcional)</label>
+          <textarea id="f-obs" placeholder="Alguma condição especial combinada com o cliente..."></textarea>
+        </div>
+      </div>
+
+      <div class="form-acoes">
+        <button class="btn-secundario" onclick="fecharFormulario()">Cancelar</button>
+        <button class="btn-primary" onclick="gerarContrato()">
+          <i class="ti ti-file-text"></i> Gerar contrato
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== DOCUMENTO DO CONTRATO (impresso) ===================== -->
+  <div class="controles no-print" id="controles-doc" style="display:none">
+    <div class="controles-esq">
+      <a href="#" onclick="voltarParaLista();return false" class="btn-voltar">
+        <i class="ti ti-arrow-left"></i> Voltar à lista
+      </a>
+    </div>
+    <button class="btn-imprimir" onclick="window.print()">
+      <i class="ti ti-printer"></i> Imprimir / Salvar PDF
+    </button>
+  </div>
+
+  <div class="contrato-doc" id="contrato-doc">
+    <h1>Contrato de Compra e Venda de Veículo Usado</h1>
+    <div class="doc-subtitulo" id="doc-subtitulo">—</div>
+
+    <h2>1. Das partes</h2>
+    <p id="doc-partes">—</p>
+
+    <h2>2. Do objeto</h2>
+    <p id="doc-objeto">—</p>
+
+    <h2>3. Do preço e forma de pagamento</h2>
+    <p id="doc-pagamento">—</p>
+
+    <h2>4. Das condições gerais</h2>
+    <div class="doc-clausula">4.1. O veículo é vendido no estado em que se encontra, tendo o(a) COMPRADOR(A) vistoriado e aceitado suas condições de uso, conservação e funcionamento antes da assinatura deste contrato.</div>
+    <div class="doc-clausula">4.2. O(A) VENDEDOR(A) declara, sob as penas da lei, que o veículo objeto deste contrato encontra-se livre de ônus, gravames, alienação fiduciária ou qualquer restrição judicial ou administrativa, salvo indicação em contrário nas observações abaixo.</div>
+    <div class="doc-clausula">4.3. A transferência de propriedade perante o órgão de trânsito competente é de responsabilidade do(a) COMPRADOR(A), que deverá providenciá-la no prazo legal a contar da data deste contrato.</div>
+    <div class="doc-clausula">4.4. Eventuais multas, débitos de IPVA, licenciamento ou infrações de trânsito ocorridas até a data da assinatura deste contrato são de responsabilidade do(a) VENDEDOR(A); as ocorridas após essa data são de responsabilidade do(a) COMPRADOR(A).</div>
+    <p id="doc-obs-wrap" style="display:none"><strong>Observações:</strong> <span id="doc-obs"></span></p>
+
+    <div class="doc-local-data" id="doc-local-data">—</div>
+
+    <div class="doc-assinaturas">
+      <div class="doc-assinatura-linha" id="doc-assin-vendedor">VENDEDOR(A)</div>
+      <div class="doc-assinatura-linha" id="doc-assin-comprador">COMPRADOR(A)</div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/painel/contratos.js"></script>
+</body>
+</html>

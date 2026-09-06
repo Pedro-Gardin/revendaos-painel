@@ -13,6 +13,7 @@ export default defineConfig({
         painel: resolve(__dirname, 'painel/index.html'),
         login: resolve(__dirname, 'painel/login.html'),
         relatorio: resolve(__dirname, 'painel/relatorio.html'),
+        contratos: resolve(__dirname, 'painel/contratos.html'),
         onboarding: resolve(__dirname, 'painel/onboarding.html'),
         migrar: resolve(__dirname, 'painel/migrar.html'),
         privacidade: resolve(__dirname, 'painel/privacidade.html'),

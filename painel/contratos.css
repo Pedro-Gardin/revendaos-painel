@@ -1,0 +1,307 @@
+/* =============================================
+   MÓDULO DE CONTRATOS — RevendaOS
+   contratos.css
+   (segue o mesmo design system de relatorio.css)
+   ============================================= */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg:     #F7F8FA;
+  --white:  #FFFFFF;
+  --border: #E2E5EA;
+  --text:   #1C1E22;
+  --muted:  #7A8094;
+  --pr:     #2563EB;
+  --green:  #16A34A;
+  --red:    #DC2626;
+  --yellow: #D97706;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+/* =============================================
+   CONTROLES (só na tela, some na impressão)
+   ============================================= */
+
+.controles {
+  max-width: 860px;
+  margin: 0 auto 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.controles-esq {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-voltar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.btn-primary, .btn-imprimir {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--pr);
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-secundario {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--white);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* =============================================
+   LISTA DE CONTRATOS
+   ============================================= */
+
+.contratos-lista-wrap {
+  max-width: 860px;
+  margin: 0 auto 24px;
+  padding: 0 16px;
+}
+
+.contratos-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.contrato-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.contrato-item:last-child { border-bottom: none; }
+.contrato-item:hover { background: var(--bg); }
+
+.contrato-item-veiculo {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.contrato-item-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.contrato-item-acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.contrato-item-acoes button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 6px;
+}
+
+.contrato-item-acoes button:hover { color: var(--pr); }
+
+.contratos-vazio {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* =============================================
+   FORMULÁRIO (dados do cliente / pagamento)
+   ============================================= */
+
+.form-wrap {
+  max-width: 860px;
+  margin: 0 auto 24px;
+  padding: 0 16px;
+}
+
+.form-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.form-secao-titulo {
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  color: var(--muted);
+  margin: 18px 0 10px;
+}
+
+.form-secao-titulo:first-child { margin-top: 0; }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.form-grid .full { grid-column: 1 / -1; }
+
+.campo label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--white);
+  color: var(--text);
+}
+
+.campo textarea { resize: vertical; min-height: 60px; }
+
+.form-veiculo-preview {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.form-veiculo-preview strong { color: var(--text); }
+
+.form-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
+
+/* =============================================
+   DOCUMENTO DO CONTRATO (impresso / PDF)
+   ============================================= */
+
+.contrato-doc {
+  display: none;
+  max-width: 800px;
+  margin: 0 auto 40px;
+  background: var(--white);
+  padding: 48px;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.contrato-doc.ativo { display: block; }
+
+.contrato-doc h1 {
+  font-size: 16px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 4px;
+}
+
+.contrato-doc .doc-subtitulo {
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 24px;
+}
+
+.contrato-doc h2 {
+  font-size: 12.5px;
+  text-transform: uppercase;
+  margin: 20px 0 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.contrato-doc p { margin-bottom: 8px; text-align: justify; }
+
+.contrato-doc .doc-clausula { margin-bottom: 10px; text-align: justify; }
+
+.contrato-doc .doc-assinaturas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-top: 60px;
+}
+
+.contrato-doc .doc-assinatura-linha {
+  border-top: 1px solid var(--text);
+  padding-top: 6px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.contrato-doc .doc-local-data {
+  margin-top: 40px;
+  font-size: 12px;
+}
+
+/* =============================================
+   IMPRESSÃO
+   ============================================= */
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+  .contrato-doc { padding: 0; margin: 0; max-width: none; }
+}

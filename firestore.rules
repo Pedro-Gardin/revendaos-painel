@@ -102,6 +102,14 @@ service cloud.firestore {
       match /crm/{docId} {
         allow read, write: if ehMembro(orgId) && role(orgId) in ['dono','vendedor'];
       }
+
+      // ─── CONTRATOS — contém dados pessoais do cliente
+      //      (CPF, RG, endereço) e valor da venda. Mesmo
+      //      acesso do CRM (dono e vendedor); financeiro
+      //      e viewer não acessam ───
+      match /contratos/{docId} {
+        allow read, write: if ehMembro(orgId) && role(orgId) in ['dono','vendedor'];
+      }
     }
 
     // Bloqueia qualquer coleção fora de organizations/*
