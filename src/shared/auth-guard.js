@@ -14,12 +14,13 @@
 import { auth } from './firebase.js';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { getOrgContext, SemOrganizationError, limparContextoCache } from './tenant.js';
+import { buscarConvitesPendentes } from './convites.js';
 
 let redirecionouLogin = false;
 let tentativas = 0;
 const MAX_TENTATIVAS = 3;
 
-const PAGINAS_SEM_CHECAGEM_ORG = ['onboarding.html', 'migrar.html'];
+const PAGINAS_SEM_CHECAGEM_ORG = ['onboarding.html', 'migrar.html', 'convite.html'];
 
 function paginaAtual() {
   return window.location.pathname.split('/').pop();
@@ -33,8 +34,15 @@ async function checarOrganization() {
     window.dispatchEvent(new CustomEvent('org-pronta'));
   } catch (e) {
     if (e instanceof SemOrganizationError) {
-      // Certeza: não existe organization pra esse usuário
-      window.location.replace('onboarding.html');
+      // Sem loja ainda: se tiver convite pendente, aceita antes
+      // de cair no onboarding (senão a pessoa cria outra revenda).
+      try {
+        const convites = await buscarConvitesPendentes(auth.currentUser?.email);
+        window.location.replace(convites.length ? 'convite.html' : 'onboarding.html');
+      } catch (err) {
+        console.warn('Não foi possível buscar convites:', err.message);
+        window.location.replace('onboarding.html');
+      }
       return;
     }
 

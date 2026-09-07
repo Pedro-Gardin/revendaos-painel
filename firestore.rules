@@ -3,12 +3,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ─── HELPERS ──────────────────────────────
     function logado() {
       return request.auth != null;
     }
 
-    // Pega o documento de membership do usuário logado dentro da org
+    function emailAuth() {
+      return request.auth.token.email;
+    }
+
     function membership(orgId) {
       return get(/databases/$(database)/documents/organizations/$(orgId)/members/$(request.auth.uid));
     }
@@ -22,56 +24,114 @@ service cloud.firestore {
       return membership(orgId).data.role;
     }
 
-    // dono pode tudo dentro da própria org
     function ehDono(orgId) {
       return ehMembro(orgId) && role(orgId) == 'dono';
     }
 
-    // ─── USERS (atalho: uid -> orgId + role) ──
-    // Evita consulta collectionGroup (que não funciona bem
-    // combinada com regras que usam exists()). Cada usuário
-    // só lê/escreve o próprio atalho.
-    match /users/{uid} {
-      allow read, write: if logado() && request.auth.uid == uid;
+    function criouAOrg(orgId) {
+      return logado() &&
+        exists(/databases/$(database)/documents/organizations/$(orgId)) &&
+        get(/databases/$(database)/documents/organizations/$(orgId)).data.criadoPor == request.auth.uid;
     }
 
-    // ─── ORGANIZATIONS ────────────────────────
+    function cargoConviteOk(cargo) {
+      return cargo in ['vendedor', 'financeiro', 'viewer'];
+    }
+
+    function conviteRef(orgId, conviteId) {
+      return get(/databases/$(database)/documents/organizations/$(orgId)/convites/$(conviteId));
+    }
+
+    function conviteExiste(orgId, conviteId) {
+      return exists(/databases/$(database)/documents/organizations/$(orgId)/convites/$(conviteId));
+    }
+
+    // Convite pendente deste email, cargo bate, usado no aceite
+    function convitePendenteValido(orgId, conviteId, cargo) {
+      return logado()
+        && conviteId is string
+        && conviteExiste(orgId, conviteId)
+        && conviteRef(orgId, conviteId).data.status == 'pendente'
+        && conviteRef(orgId, conviteId).data.email == emailAuth()
+        && conviteRef(orgId, conviteId).data.role == cargo
+        && cargoConviteOk(cargo);
+    }
+
+    match /users/{uid} {
+      allow read: if logado() && request.auth.uid == uid;
+
+      // Atalho só depois de já ser membro (onboarding ou convite aceito)
+      // ou no mesmo instante do aceite (membro criado imediatamente antes).
+      allow create, update: if logado()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasAll(['orgId', 'role'])
+        && request.resource.data.role in ['dono', 'vendedor', 'financeiro', 'viewer']
+        && (
+          (ehMembro(request.resource.data.orgId) && role(request.resource.data.orgId) == request.resource.data.role)
+          || (
+            request.resource.data.keys().hasAny(['conviteId'])
+            && convitePendenteValido(request.resource.data.orgId, request.resource.data.conviteId, request.resource.data.role)
+          )
+        );
+
+      // Dono remove o atalho quando tira alguém da equipe
+      allow delete: if logado() && (
+        request.auth.uid == uid
+        || (resource.data.orgId is string && ehDono(resource.data.orgId))
+      );
+    }
+
     match /organizations/{orgId} {
-      // Qualquer um pode LER o documento da org (nome, slug) —
-      // necessário pro site público resolver "qual revenda é essa"
-      // a partir do slug na URL, mesmo sem estar logado.
       allow read: if true;
-
-      // Só cria organization um usuário logado (vira dono automaticamente
-      // no onboarding — a criação do membro "dono" acontece em conjunto).
       allow create: if logado();
-
-      // Só o dono edita/apaga dados da própria organização
       allow update, delete: if ehDono(orgId);
 
-      // ─── MEMBERS (usuários + cargo dentro da org) ───
       match /members/{uid} {
-        // Um membro pode ler a lista de membros da própria org
-        // (precisa pra saber quem mais trabalha ali)
         allow read: if ehMembro(orgId);
 
-        // Só o dono adiciona/remove/muda cargo de membros.
-        // Exceção: o próprio usuário pode criar o PRÓPRIO registro
-        // como "dono" só no fluxo de onboarding (criação da org).
-        allow create: if (logado() && request.auth.uid == uid && request.resource.data.role == 'dono')
-                      || ehDono(orgId);
+        allow create: if
+          // Onboarding: quem criou a org se registra como dono
+          (logado() && request.auth.uid == uid && request.resource.data.role == 'dono' && criouAOrg(orgId))
+          // Dono adiciona membro na mão
+          || ehDono(orgId)
+          // Aceite de convite pendente
+          || (
+            logado()
+            && request.auth.uid == uid
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.conviteId is string
+            && convitePendenteValido(orgId, request.resource.data.conviteId, request.resource.data.role)
+          );
+
         allow update, delete: if ehDono(orgId);
       }
 
-      // ─── CARROS — site público lê sem login; equipe da
-      //      org (qualquer role) edita, exceto viewer ───
+      match /convites/{conviteId} {
+        allow read: if ehDono(orgId)
+          || (logado() && resource.data.email == emailAuth());
+
+        allow create: if ehDono(orgId)
+          && request.resource.data.email is string
+          && request.resource.data.status == 'pendente'
+          && cargoConviteOk(request.resource.data.role);
+
+        allow update: if ehDono(orgId) || (
+          logado()
+          && resource.data.status == 'pendente'
+          && resource.data.email == emailAuth()
+          && request.resource.data.status in ['aceito', 'recusado']
+          && request.resource.data.aceitoPor == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'aceitoPor', 'aceitoEm'])
+        );
+
+        allow delete: if ehDono(orgId);
+      }
+
       match /carros/{carroId} {
         allow read: if true;
         allow create, update, delete: if ehMembro(orgId) && role(orgId) != 'viewer';
       }
 
-      // ─── FINANCEIRO / GASTOS — dono e financeiro têm
-      //      acesso total; vendedor e viewer não acessam ───
       match /financeiro/{docId} {
         allow read, write: if ehMembro(orgId) && role(orgId) in ['dono','financeiro'];
       }
@@ -79,15 +139,11 @@ service cloud.firestore {
         allow read, write: if ehMembro(orgId) && role(orgId) in ['dono','financeiro'];
       }
 
-      // ─── METAS — vendedor pode VER (saber quanto falta),
-      //      mas só dono/financeiro editam ───
       match /metas/{docId} {
         allow read: if ehMembro(orgId) && role(orgId) in ['dono','financeiro','vendedor','viewer'];
         allow write: if ehMembro(orgId) && role(orgId) in ['dono','financeiro'];
       }
 
-      // ─── VENDEDORES / COMISSÕES — dono e financeiro
-      //      gerenciam; vendedor só lê (vê a própria comissão) ───
       match /vendedores/{docId} {
         allow read: if ehMembro(orgId) && role(orgId) != 'viewer';
         allow write: if ehMembro(orgId) && role(orgId) in ['dono','financeiro'];
@@ -97,22 +153,15 @@ service cloud.firestore {
         allow write: if ehMembro(orgId) && role(orgId) in ['dono','financeiro'];
       }
 
-      // ─── CRM — dono e vendedor têm acesso total;
-      //      financeiro e viewer não acessam ───
       match /crm/{docId} {
         allow read, write: if ehMembro(orgId) && role(orgId) in ['dono','vendedor'];
       }
 
-      // ─── CONTRATOS — contém dados pessoais do cliente
-      //      (CPF, RG, endereço) e valor da venda. Mesmo
-      //      acesso do CRM (dono e vendedor); financeiro
-      //      e viewer não acessam ───
       match /contratos/{docId} {
         allow read, write: if ehMembro(orgId) && role(orgId) in ['dono','vendedor'];
       }
     }
 
-    // Bloqueia qualquer coleção fora de organizations/*
     match /{document=**} {
       allow read, write: if false;
     }

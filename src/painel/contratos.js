@@ -135,6 +135,15 @@ function alternarCamposPagamento() {
 }
 window.alternarCamposPagamento = alternarCamposPagamento;
 
+// ─── ALTERNÂNCIA DE TEXTO CONFORME TIPO (USADO / 0KM) ─
+// Só ajusta o placeholder do KM pra deixar claro que 0km não precisa
+// preencher rodagem; a diferença real de cláusulas acontece na hora
+// de montar o documento (montarDocumento), conforme dados.tipoVeiculo.
+function alternarClausulasPorTipo() {
+  // reservado para eventuais ajustes visuais futuros no formulário
+}
+window.alternarClausulasPorTipo = alternarClausulasPorTipo;
+
 // ─── NAVEGAÇÃO ENTRE TELAS ───────────────────
 function abrirFormulario() {
   document.getElementById('view-lista').style.display = 'none';
@@ -185,6 +194,11 @@ function renderListaContratos() {
 
 // ─── MONTA O TEXTO DO CONTRATO NA TELA ────────
 function montarDocumento(dados) {
+  const eh0km = dados.tipoVeiculo === '0km';
+
+  document.getElementById('doc-titulo').textContent =
+    `Contrato de Compra e Venda de Veículo ${eh0km ? '0 KM' : 'Usado'}`;
+
   document.getElementById('doc-subtitulo').textContent =
     `${dados.orgNome || 'Revenda'} — Emitido em ${dados.dataGeracao}`;
 
@@ -201,8 +215,12 @@ function montarDocumento(dados) {
   document.getElementById('doc-objeto').innerHTML =
     `O(A) VENDEDOR(A) vende ao(à) COMPRADOR(A), que compra em caráter irrevogável e irretratável, o veículo ` +
     `<strong>${esc(dados.veiculoNome)}</strong>, cor ${esc(dados.veiculoCor || '—')}, ` +
-    `câmbio ${esc(dados.veiculoCambio || '—')}, combustível ${esc(dados.veiculoCombustivel || '—')}, ` +
-    `com ${esc(dados.veiculoKm || '—')} km rodados, nas condições em que se encontra e conforme vistoria realizada pelo(a) COMPRADOR(A).`;
+    `câmbio ${esc(dados.veiculoCambio || '—')}, combustível ${esc(dados.veiculoCombustivel || '—')}` +
+    `${!eh0km ? `, com ${esc(dados.veiculoKm || '—')} km rodados` : ''}.`;
+
+  document.getElementById('doc-identificacao').innerHTML =
+    `<strong>Identificação do veículo</strong> — Placa: ${esc(dados.veiculoPlaca || '—')} · ` +
+    `Renavam: ${esc(dados.veiculoRenavam || '—')} · Chassi: ${esc(dados.veiculoChassi || '—')}.`;
 
   let textoPagamento = `O valor total da venda é de <strong>${esc(fmtMoeda(dados.precoVenda))}</strong>, `;
   if (dados.formaPagamento === 'vista') {
@@ -213,6 +231,22 @@ function montarDocumento(dados) {
     textoPagamento += `sendo parte do pagamento realizado mediante a entrega, como parte do negócio, do veículo ${esc(dados.veiculoTroca || 'descrito em observações')}.`;
   }
   document.getElementById('doc-pagamento').innerHTML = textoPagamento;
+
+  document.getElementById('doc-vistoria').innerHTML = eh0km
+    ? `Por se tratar de veículo 0 KM, o mesmo é entregue ao(à) COMPRADOR(A) em condição de fábrica, acompanhado da respectiva nota fiscal e demais documentos exigidos pelo fabricante/montadora.`
+    : `O(A) COMPRADOR(A) declara ter vistoriado pessoalmente o veículo antes da assinatura deste contrato, aceitando-o no estado de uso, conservação e funcionamento em que se encontra, não cabendo reclamações posteriores quanto a condições visíveis no momento da vistoria.`;
+
+  document.getElementById('doc-garantia').innerHTML = eh0km
+    ? `Por se tratar de veículo 0 KM, a garantia aplicável é a de fábrica, conforme termos e prazos estabelecidos pelo próprio fabricante/montadora, não cabendo à VENDEDORA garantia adicional além da repassada pelo fabricante.`
+    : `A VENDEDORA garante, pelo prazo legal, apenas os componentes internos de motor e câmbio, desde que não haja mau uso, alteração das características originais do veículo ou manutenção realizada fora da rede indicada pela VENDEDORA. Ficam fora da garantia: itens de desgaste natural (pastilhas e lonas de freio, discos, correias, bateria, amortecedores, molas e similares), componentes eletroeletrônicos, sistema de arrefecimento e manutenções de rotina. Qualquer serviço coberto pela garantia deve ser previamente orçado e aprovado pela VENDEDORA; manutenção feita por conta do(a) COMPRADOR(A) em oficina não indicada não será ressarcida.`;
+
+  document.getElementById('doc-regularidade').innerHTML =
+    `Tributos (IPVA/licenciamento): ${esc(dados.tributos || 'em dia')}. ` +
+    `Multas e taxas em aberto: ${esc(dados.multas || 'nenhuma consta até a data deste contrato')}. ` +
+    `Alienação fiduciária/outros registros impeditivos: ${esc(dados.alienacao || 'nenhum consta até a data deste contrato')}.`;
+
+  document.getElementById('doc-foro').textContent =
+    `Fica eleito o foro da comarca de ${dados.orgCidade || 'domicílio da VENDEDORA'}${dados.orgUf ? ' - ' + dados.orgUf : ''} para dirimir quaisquer dúvidas decorrentes deste contrato.`;
 
   const obsWrap = document.getElementById('doc-obs-wrap');
   if (dados.obs) {
@@ -229,6 +263,17 @@ function montarDocumento(dados) {
     `VENDEDOR(A) — ${dados.orgNome || ''}`;
   document.getElementById('doc-assin-comprador').textContent =
     `COMPRADOR(A) — ${dados.clienteNome || ''}`;
+
+  const testWrap = document.getElementById('doc-testemunhas-wrap');
+  if (dados.test1Nome || dados.test2Nome) {
+    testWrap.style.display = '';
+    document.getElementById('doc-test1').textContent =
+      `Testemunha 1 — ${dados.test1Nome || ''}${dados.test1Doc ? ' — RG/CPF ' + dados.test1Doc : ''}`;
+    document.getElementById('doc-test2').textContent =
+      `Testemunha 2 — ${dados.test2Nome || ''}${dados.test2Doc ? ' — RG/CPF ' + dados.test2Doc : ''}`;
+  } else {
+    testWrap.style.display = 'none';
+  }
 }
 
 // ─── GERA CONTRATO (a partir do formulário) ───
@@ -256,17 +301,31 @@ async function gerarContrato() {
     clienteEndereco:  document.getElementById('f-cli-endereco').value.trim(),
     clienteTelefone:  document.getElementById('f-cli-telefone').value.trim(),
 
+    tipoVeiculo:          document.getElementById('f-tipo-veiculo').value,
     veiculoId:            carro.id,
     veiculoNome:          nomeVeiculo(carro),
     veiculoCor:           carro.cor || '',
     veiculoCambio:        carro.cambio || '',
     veiculoCombustivel:   carro.combustivel || '',
     veiculoKm:            carro.km || '',
+    veiculoPlaca:         document.getElementById('f-placa').value.trim(),
+    veiculoRenavam:       document.getElementById('f-renavam').value.trim(),
+    veiculoChassi:        document.getElementById('f-chassi').value.trim(),
 
     precoVenda:      parseMoedaLivre(document.getElementById('f-preco-venda').value),
     formaPagamento:  document.getElementById('f-forma-pagamento').value,
     financeira:      document.getElementById('f-financeira').value.trim(),
     veiculoTroca:    document.getElementById('f-veiculo-troca').value.trim(),
+
+    tributos:    document.getElementById('f-tributos').value.trim(),
+    multas:      document.getElementById('f-multas').value.trim(),
+    alienacao:   document.getElementById('f-alienacao').value.trim(),
+
+    test1Nome:  document.getElementById('f-test1-nome').value.trim(),
+    test1Doc:   document.getElementById('f-test1-doc').value.trim(),
+    test2Nome:  document.getElementById('f-test2-nome').value.trim(),
+    test2Doc:   document.getElementById('f-test2-doc').value.trim(),
+
     obs:             document.getElementById('f-obs').value.trim(),
 
     dataGeracao: hoje,

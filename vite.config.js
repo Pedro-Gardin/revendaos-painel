@@ -15,6 +15,8 @@ export default defineConfig({
         relatorio: resolve(__dirname, 'painel/relatorio.html'),
         contratos: resolve(__dirname, 'painel/contratos.html'),
         onboarding: resolve(__dirname, 'painel/onboarding.html'),
+        equipe: resolve(__dirname, 'painel/equipe.html'),
+        convite: resolve(__dirname, 'painel/convite.html'),
         migrar: resolve(__dirname, 'painel/migrar.html'),
         privacidade: resolve(__dirname, 'painel/privacidade.html'),
         termos: resolve(__dirname, 'painel/termos.html'),

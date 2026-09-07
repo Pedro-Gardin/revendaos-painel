@@ -42,6 +42,44 @@
         Selecione um veículo acima
       </div>
 
+      <div class="form-grid" style="margin-top:12px">
+        <div class="campo">
+          <label for="f-tipo-veiculo">Tipo</label>
+          <select id="f-tipo-veiculo" onchange="alternarClausulasPorTipo()">
+            <option value="usado">Usado</option>
+            <option value="0km">0 KM (novo)</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="f-placa">Placa</label>
+          <input type="text" id="f-placa" placeholder="AAA-0A00" />
+        </div>
+        <div class="campo">
+          <label for="f-renavam">Renavam</label>
+          <input type="text" id="f-renavam" />
+        </div>
+        <div class="campo">
+          <label for="f-chassi">Chassi</label>
+          <input type="text" id="f-chassi" />
+        </div>
+      </div>
+
+      <div class="form-secao-titulo">Situação de regularidade do veículo</div>
+      <div class="form-grid">
+        <div class="campo">
+          <label for="f-tributos">Valor aproximado dos tributos (IPVA/licenciamento)</label>
+          <input type="text" id="f-tributos" placeholder="R$ 0,00 ou 'em dia'" />
+        </div>
+        <div class="campo">
+          <label for="f-multas">Multas e taxas em aberto</label>
+          <input type="text" id="f-multas" placeholder="Nenhuma / descrever" />
+        </div>
+        <div class="campo full">
+          <label for="f-alienacao">Alienação fiduciária / outros registros impeditivos</label>
+          <input type="text" id="f-alienacao" placeholder="Nenhum / descrever" />
+        </div>
+      </div>
+
       <div class="form-secao-titulo">Dados do vendedor (revenda)</div>
       <div class="form-grid">
         <div class="campo full">
@@ -110,6 +148,26 @@
         </div>
       </div>
 
+      <div class="form-secao-titulo">Testemunhas (opcional)</div>
+      <div class="form-grid">
+        <div class="campo">
+          <label for="f-test1-nome">Testemunha 1 — nome</label>
+          <input type="text" id="f-test1-nome" />
+        </div>
+        <div class="campo">
+          <label for="f-test1-doc">Testemunha 1 — RG/CPF</label>
+          <input type="text" id="f-test1-doc" />
+        </div>
+        <div class="campo">
+          <label for="f-test2-nome">Testemunha 2 — nome</label>
+          <input type="text" id="f-test2-nome" />
+        </div>
+        <div class="campo">
+          <label for="f-test2-doc">Testemunha 2 — RG/CPF</label>
+          <input type="text" id="f-test2-doc" />
+        </div>
+      </div>
+
       <div class="form-acoes">
         <button class="btn-secundario" onclick="fecharFormulario()">Cancelar</button>
         <button class="btn-primary" onclick="gerarContrato()">
@@ -133,7 +191,7 @@
   </div>
 
   <div class="contrato-doc" id="contrato-doc">
-    <h1>Contrato de Compra e Venda de Veículo Usado</h1>
+    <h1 id="doc-titulo">Contrato de Compra e Venda de Veículo</h1>
     <div class="doc-subtitulo" id="doc-subtitulo">—</div>
 
     <h2>1. Das partes</h2>
@@ -141,22 +199,48 @@
 
     <h2>2. Do objeto</h2>
     <p id="doc-objeto">—</p>
+    <p id="doc-identificacao">—</p>
 
     <h2>3. Do preço e forma de pagamento</h2>
     <p id="doc-pagamento">—</p>
 
-    <h2>4. Das condições gerais</h2>
-    <div class="doc-clausula">4.1. O veículo é vendido no estado em que se encontra, tendo o(a) COMPRADOR(A) vistoriado e aceitado suas condições de uso, conservação e funcionamento antes da assinatura deste contrato.</div>
-    <div class="doc-clausula">4.2. O(A) VENDEDOR(A) declara, sob as penas da lei, que o veículo objeto deste contrato encontra-se livre de ônus, gravames, alienação fiduciária ou qualquer restrição judicial ou administrativa, salvo indicação em contrário nas observações abaixo.</div>
-    <div class="doc-clausula">4.3. A transferência de propriedade perante o órgão de trânsito competente é de responsabilidade do(a) COMPRADOR(A), que deverá providenciá-la no prazo legal a contar da data deste contrato.</div>
-    <div class="doc-clausula">4.4. Eventuais multas, débitos de IPVA, licenciamento ou infrações de trânsito ocorridas até a data da assinatura deste contrato são de responsabilidade do(a) VENDEDOR(A); as ocorridas após essa data são de responsabilidade do(a) COMPRADOR(A).</div>
-    <p id="doc-obs-wrap" style="display:none"><strong>Observações:</strong> <span id="doc-obs"></span></p>
+    <h2>4. Da vistoria e do estado do veículo</h2>
+    <p id="doc-vistoria">—</p>
+
+    <h2>5. Da responsabilidade civil e criminal</h2>
+    <p>A partir da data e hora de assinatura deste contrato, o(a) COMPRADOR(A) passa a responder, nas esferas civil, criminal e administrativa, por quaisquer danos, multas ou infrações de trânsito decorrentes do uso do veículo ora adquirido. Eventuais multas, pontuações e débitos anteriores à data deste contrato permanecem de responsabilidade do(a) VENDEDOR(A), salvo disposição em contrário nas observações abaixo.</p>
+
+    <h2>6. Da garantia</h2>
+    <p id="doc-garantia">—</p>
+
+    <h2>7. Da transferência do bem</h2>
+    <p>A transferência de propriedade do veículo perante o órgão de trânsito competente para o nome do(a) COMPRADOR(A) somente ocorrerá após a quitação integral do valor descrito na cláusula 3, ficando desde já o(a) COMPRADOR(A), nos termos do artigo 629 do Código Civil, na condição de depositário(a) do bem, responsável por sua guarda e conservação até o pagamento total.</p>
+
+    <h2>8. Da situação de regularidade do veículo</h2>
+    <p id="doc-regularidade">—</p>
+
+    <h2>9. Da cláusula resolutiva</h2>
+    <p>Em caso de descumprimento das condições de pagamento estabelecidas neste contrato, fica facultado ao(à) VENDEDOR(A) exigir o cumprimento integral da obrigação ou requerer a resolução do presente contrato, nos termos do artigo 475 do Código Civil, independentemente de notificação prévia.</p>
+
+    <h2>10. Da proteção de dados (LGPD)</h2>
+    <p>Os dados pessoais informados neste contrato são tratados em conformidade com a Lei nº 13.709/2018 (Lei Geral de Proteção de Dados), sendo utilizados exclusivamente para a formalização deste instrumento e o cumprimento das obrigações dele decorrentes.</p>
+
+    <h2>11. Do foro</h2>
+    <p id="doc-foro">—</p>
+
+    <p id="doc-obs-wrap" style="display:none"><strong>Observações adicionais:</strong> <span id="doc-obs"></span></p>
 
     <div class="doc-local-data" id="doc-local-data">—</div>
+
+    <p style="margin-top:16px">E, por estarem de acordo com as condições e termos deste contrato, as partes o assinam na presença das testemunhas abaixo, quando indicadas.</p>
 
     <div class="doc-assinaturas">
       <div class="doc-assinatura-linha" id="doc-assin-vendedor">VENDEDOR(A)</div>
       <div class="doc-assinatura-linha" id="doc-assin-comprador">COMPRADOR(A)</div>
+    </div>
+    <div class="doc-assinaturas" id="doc-testemunhas-wrap" style="margin-top:36px;display:none">
+      <div class="doc-assinatura-linha" id="doc-test1">Testemunha 1</div>
+      <div class="doc-assinatura-linha" id="doc-test2">Testemunha 2</div>
     </div>
   </div>
 
