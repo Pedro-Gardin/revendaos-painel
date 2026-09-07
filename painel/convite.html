@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Convites — RevendaOS</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="equipe.css" />
+</head>
+<body class="convite-page">
+  <main class="convite-box">
+    <div class="convite-logo">REVENDA<span>OS</span></div>
+    <div class="convite-icon"><i class="ti ti-mail-opened"></i></div>
+    <h1>Você recebeu um convite</h1>
+    <p class="convite-sub">Escolha uma revenda para entrar com sua conta. Você não precisará criar outra revenda.</p>
+    <div class="convite-usuario"><i class="ti ti-user"></i><span id="convite-email">Carregando...</span></div>
+    <div class="convite-msg" id="convite-msg" role="status"></div>
+    <div id="convites-disponiveis"><div class="convite-loading"><i class="ti ti-loader-2"></i> Buscando convites...</div></div>
+    <div class="convite-rodape"><button type="button" id="btn-sair-convite">Sair e usar outra conta</button></div>
+  </main>
+  <script type="module" src="/src/painel/convite.js"></script>
+</body>
+</html>

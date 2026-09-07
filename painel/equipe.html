@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Equipe — RevendaOS</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="equipe.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo"><span class="logo-text">REVENDA<span>OS</span></span></div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="index.html"><i class="ti ti-arrow-left"></i><span>Voltar ao painel</span></a>
+      <div class="nav-group-label">CONFIGURAÇÕES</div>
+      <a class="nav-item active" href="equipe.html"><i class="ti ti-users-group"></i><span>Equipe</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="usuario-info"><i class="ti ti-user-circle" style="font-size:18px"></i><span id="usuario-email">Carregando...</span></div>
+      <button onclick="sair()" class="btn-sair"><i class="ti ti-logout"></i><span>Sair</span></button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="topbar"><div class="topbar-left"><h1 class="page-title">Equipe</h1></div></div>
+    <div class="pane equipe-pane">
+      <div class="equipe-intro">
+        <div><h2 id="equipe-org-nome">Sua equipe</h2><p>Convide pessoas para trabalhar na sua revenda. Cada cargo tem permissões diferentes.</p></div>
+      </div>
+
+      <div class="equipe-layout">
+        <section class="card convite-card">
+          <div class="card-header"><div class="card-title"><i class="ti ti-user-plus"></i> Convidar membro</div></div>
+          <div class="equipe-msg" id="equipe-msg" role="status"></div>
+          <form id="form-convite">
+            <div class="field"><label for="convite-email">E-mail</label><input id="convite-email" type="email" required placeholder="pessoa@exemplo.com" autocomplete="email" /></div>
+            <div class="field"><label for="convite-role">Cargo</label>
+              <select id="convite-role">
+                <option value="vendedor">Vendedor — estoque e CRM</option>
+                <option value="financeiro">Financeiro — lançamentos e metas</option>
+                <option value="viewer">Somente leitura</option>
+              </select>
+            </div>
+            <button class="btn-primary" id="btn-convidar" type="submit"><i class="ti ti-send"></i> Enviar convite</button>
+          </form>
+        </section>
+
+        <section class="card">
+          <div class="card-header"><div class="card-title"><i class="ti ti-users"></i> Membros ativos</div><span class="equipe-contador" id="membros-contador">—</span></div>
+          <div class="equipe-lista" id="lista-membros"><div class="loading-state">Carregando equipe...</div></div>
+        </section>
+      </div>
+
+      <section class="card convites-pendentes-card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-mail"></i> Convites pendentes</div></div>
+        <div class="equipe-lista" id="lista-convites"><div class="loading-state">Carregando convites...</div></div>
+      </section>
+    </div>
+  </main>
+  <script type="module" src="/src/painel/equipe.js"></script>
+</body>
+</html>
