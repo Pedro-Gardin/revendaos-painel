@@ -8,7 +8,7 @@ service cloud.firestore {
     }
 
     function emailAuth() {
-      return request.auth.token.email;
+      return request.auth.token.email.lower();
     }
 
     function membership(orgId) {
