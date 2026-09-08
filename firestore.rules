@@ -81,6 +81,17 @@ service cloud.firestore {
       );
     }
 
+    // ─── Regra específica pra collection GROUP query ───
+    // buscarConvitesPendentes() usa collectionGroup(db, 'convites') pra
+    // procurar convites em TODAS as revendas ao mesmo tempo (a pessoa
+    // convidada ainda não sabe o orgId). Uma regra aninhada normal
+    // (organizations/{orgId}/convites/{conviteId}) NÃO autoriza esse
+    // tipo de busca — o Firestore exige uma regra à parte com o
+    // caminho curinga {path=**} pra liberar collection group queries.
+    match /{path=**}/convites/{conviteId} {
+      allow read: if logado() && resource.data.email == emailAuth();
+    }
+
     match /organizations/{orgId} {
       allow read: if true;
       allow create: if logado();
