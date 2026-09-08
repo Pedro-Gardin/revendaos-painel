@@ -37,10 +37,17 @@ async function checarOrganization() {
       // Sem loja ainda: se tiver convite pendente, aceita antes
       // de cair no onboarding (senão a pessoa cria outra revenda).
       try {
+        // DEBUG TEMPORÁRIO — remover depois de identificar o problema
+        const tokenResult = await auth.currentUser.getIdTokenResult(true);
+        console.log('[DEBUG] email do usuário logado:', JSON.stringify(auth.currentUser?.email));
+        console.log('[DEBUG] email dentro do token (claims):', JSON.stringify(tokenResult.claims.email));
+
         const convites = await buscarConvitesPendentes(auth.currentUser?.email);
+        console.log('[DEBUG] convites encontrados:', convites.length, convites);
         window.location.replace(convites.length ? 'convite.html' : 'onboarding.html');
       } catch (err) {
         console.warn('Não foi possível buscar convites:', err.message);
+        console.log('[DEBUG] erro completo:', err);
         window.location.replace('onboarding.html');
       }
       return;
