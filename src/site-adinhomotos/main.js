@@ -1,10 +1,10 @@
 // =============================================
-//  SITE MOTORSUL — main.js
+//  SITE ADINHO MOTOS — main.js
 //  Template exclusivo desta revenda.
 //
 //  IMPORTANTE: o slug abaixo é FIXO (não vem da URL).
 //  Isso garante que essa página SEMPRE mostra o estoque
-//  da Motorsul, mesmo que alguém tente trocar parâmetros
+//  da Adinho Motos, mesmo que alguém tente trocar parâmetros
 //  na URL — diferente do site padrão (src/site/main.js),
 //  que lê ?loja= e por isso pode exibir qualquer revenda.
 //  É essa "trava" que fecha o template pra só essa revenda.
@@ -13,9 +13,11 @@ import { db } from '../shared/firebase.js';
 import { esc, escAttr, escUrl } from '../shared/seguranca.js';
 import { collection, doc, getDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
 
-// TODO: troque pelo ID real do documento em organizations/{orgId}
-// (o mesmo slug usado no onboarding dessa revenda).
-const ORG_SLUG = 'autocerto-caico';
+// IMPORTANTE: esse slug precisa ser IDÊNTICO ao que o dono da
+// Adinho Motos usar no campo "Identificador único (slug)" na
+// hora de criar a loja em onboarding.html. Se ele digitar outra
+// coisa lá, o site fica mostrando estoque vazio pra sempre.
+const ORG_SLUG = 'adinho-motos-espumoso';
 
 let todosCarros = [];
 let carrosVendidos = [];
@@ -62,7 +64,7 @@ async function iniciarSite() {
 
 function aplicarBrandingDaRevenda(org) {
   if (org.nome) {
-    document.title = `${org.nome} | Veículos selecionados`;
+    document.title = `${org.nome} | Motos selecionadas`;
   }
 }
 
@@ -101,7 +103,7 @@ function render() {
     const limite = Number(filtroPreco);
     itens = itens.filter(c => {
       const preco = Number(String(c.preco).replace(/[^\d.,]/g, '').replace(/\./g, '').replace(',', '.')) || 0;
-      return limite === 999999 ? preco > 100000 : preco <= limite;
+      return limite === 999999 ? preco > 20000 : preco <= limite;
     });
   }
   if (filtroTexto) {
@@ -112,9 +114,9 @@ function render() {
     itens = itens.filter(c => marcasSelecionadas.has(c.marca));
   }
 
-  grid.innerHTML = itens.map(cardHTML).join('') || '<p>Nenhum veículo encontrado com esses filtros.</p>';
+  grid.innerHTML = itens.map(cardHTML).join('') || '<p>Nenhuma moto encontrada com esses filtros.</p>';
   document.querySelector('#vehicle-count').textContent =
-    `${itens.length} veículo${itens.length === 1 ? '' : 's'} disponível${itens.length === 1 ? '' : 'is'}`;
+    `${itens.length} moto${itens.length === 1 ? '' : 's'} disponível${itens.length === 1 ? '' : 'is'}`;
 
   const secaoVendidos = document.querySelector('#vendidos');
   if (carrosVendidos.length) {
@@ -132,7 +134,7 @@ function render() {
 function cardHTML(c) {
   const foto = c.fotos && c.fotos.length ? escUrl(c.fotos[0]) : '';
   const statusLabel = { disponivel: 'DISPONÍVEL', reservado: 'RESERVADO' }[c.status] || '';
-  const msgWpp = encodeURIComponent(`Olá! Tenho interesse no ${c.marca} ${c.modelo}`);
+  const msgWpp = encodeURIComponent(`Olá! Tenho interesse na ${c.marca} ${c.modelo}`);
 
   return `
     <article class="car-card">
@@ -140,7 +142,7 @@ function cardHTML(c) {
         <div class="car-image">
           ${foto ? `<img src="${foto}" alt="${esc(c.marca)} ${esc(c.modelo)}" loading="lazy">` : ''}
           <span class="badge">${esc(statusLabel)}</span>
-          <button class="favorite" type="button" aria-label="Favoritar veículo">♡</button>
+          <button class="favorite" type="button" aria-label="Favoritar moto">♡</button>
         </div>
       </a>
       <div class="car-info">
@@ -150,7 +152,7 @@ function cardHTML(c) {
         <div class="price">${money(c.preco)}</div>
         <div class="card-actions">
           <a class="button button-outline" href="detalhes.html?id=${escAttr(c.id)}">Ver detalhes</a>
-          <a class="button whatsapp-card" href="https://wa.me/5584988934086?text=${msgWpp}" target="_blank" rel="noreferrer">WhatsApp</a>
+          <a class="button whatsapp-card" href="https://wa.me/5554991184936?text=${msgWpp}" target="_blank" rel="noreferrer">WhatsApp</a>
         </div>
       </div>
     </article>`;

@@ -23,10 +23,10 @@ export default defineConfig({
         site: resolve(__dirname, 'site/index.html'),
         siteMotorsul: resolve(__dirname, 'site-motorsul/index.html'),
         siteMotorsulDetalhes: resolve(__dirname, 'site-motorsul/detalhes.html'),
-        siteAutoCerto: resolve(__dirname, 'site-autocerto/index.html'),
-        siteAutoCertoDetalhes: resolve(__dirname, 'site-autocerto/detalhes.html'),
         siteBaseMotors: resolve(__dirname, 'site-basemotors/index.html'),
-        siteBaseMotorsDetalhes: resolve(__dirname, 'site-basemotors/detalhes.html')
+        siteBaseMotorsDetalhes: resolve(__dirname, 'site-basemotors/detalhes.html'),
+        siteAdinhoMotos: resolve(__dirname, 'site-adinhomotos/index.html'),
+        siteAdinhoMotosDetalhes: resolve(__dirname, 'site-adinhomotos/detalhes.html')
       }
     }
   }

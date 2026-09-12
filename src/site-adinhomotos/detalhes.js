@@ -1,12 +1,12 @@
 // =============================================
-//  SITE MOTORSUL — detalhes.js
+//  SITE ADINHO MOTOS — detalhes.js
 //  Mesma trava de ORG_SLUG fixo do main.js.
 // =============================================
 import { db } from '../shared/firebase.js';
 import { esc, escAttr, escUrl } from '../shared/seguranca.js';
 import { collection, doc, getDoc, getDocs, query, orderBy } from 'firebase/firestore';
 
-const ORG_SLUG = 'autocerto-caico'; // mesmo valor do main.js (Auto Certo)
+const ORG_SLUG = 'adinho-motos-espumoso'; // mesmo valor do main.js
 
 const money = v => {
   const n = Number(String(v).replace(/[^\d.,]/g, '').replace(/\./g, '').replace(',', '.'));
@@ -19,21 +19,21 @@ async function iniciar() {
 
   const carroSnap = await getDoc(doc(db, 'organizations', ORG_SLUG, 'carros', id));
   if (!carroSnap.exists()) {
-    document.querySelector('main').innerHTML = '<p style="padding:40px 20px">Veículo não encontrado.</p>';
+    document.querySelector('main').innerHTML = '<p style="padding:40px 20px">Moto não encontrada.</p>';
     return;
   }
   const c = { id: carroSnap.id, ...carroSnap.data() };
 
-  document.title = `${c.marca} ${c.modelo} | Motorsul`;
+  document.title = `${c.marca} ${c.modelo} | Adinho Motos`;
   document.querySelector('#crumb').textContent = `${c.marca} ${c.modelo}`;
   document.querySelector('#brand').textContent = (c.marca || '').toUpperCase();
   document.querySelector('#name').textContent = c.modelo || '';
   document.querySelector('#meta').innerHTML = `${esc(c.ano)} · ${esc(c.km)} km<br>${esc(c.cambio)} · ${esc(c.comb)}`;
   document.querySelector('#price').textContent = money(c.preco);
   document.querySelector('#description').textContent = c.desc ||
-    `${c.marca} ${c.modelo} selecionado pela Motorsul, com procedência, revisão e documentação em dia. Consulte nossa equipe para conhecer todos os detalhes.`;
+    `${c.marca} ${c.modelo} selecionada pela Adinho Motos, com procedência, revisão e documentação em dia. Consulte nossa equipe para conhecer todos os detalhes.`;
   document.querySelector('#whatsapp').href =
-    `https://wa.me/5584988934086?text=${encodeURIComponent(`Olá! Vi o site e tenho interesse no ${c.marca} ${c.modelo} (${c.preco}). Ainda disponível?`)}`;
+    `https://wa.me/5554991184936?text=${encodeURIComponent(`Olá! Vi o site e tenho interesse na ${c.marca} ${c.modelo} (${c.preco}). Ainda disponível?`)}`;
 
   document.querySelector('#specs').innerHTML = [
     ['Marca', c.marca], ['Modelo', c.modelo], ['Ano', c.ano], ['Quilometragem', c.km ? `${c.km} km` : ''],
