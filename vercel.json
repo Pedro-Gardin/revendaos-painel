@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/painel/index.html",
+      "permanent": false
+    }
+  ]
+}
