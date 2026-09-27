@@ -2,7 +2,20 @@
   "redirects": [
     {
       "source": "/",
+      "has": [{ "type": "host", "value": "app.revendaos.com.br" }],
       "destination": "/painel/index.html",
+      "permanent": false
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "www.revendaos.com.br" }],
+      "destination": "/landing/index.html",
+      "permanent": false
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "revendaos.com.br" }],
+      "destination": "/landing/index.html",
       "permanent": false
     }
   ]

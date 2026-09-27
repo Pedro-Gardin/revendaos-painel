@@ -21,6 +21,7 @@ export default defineConfig({
         privacidade: resolve(__dirname, 'painel/privacidade.html'),
         termos: resolve(__dirname, 'painel/termos.html'),
         site: resolve(__dirname, 'site/index.html'),
+        landing: resolve(__dirname, 'landing/index.html'),
         siteMotorsul: resolve(__dirname, 'site-motorsul/index.html'),
         siteMotorsulDetalhes: resolve(__dirname, 'site-motorsul/detalhes.html'),
         siteBaseMotors: resolve(__dirname, 'site-basemotors/index.html'),
