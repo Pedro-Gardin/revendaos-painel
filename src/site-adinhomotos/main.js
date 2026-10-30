@@ -25,6 +25,7 @@ let filtroMarca = '';
 let filtroModelo = '';
 let filtroPreco = '';
 let filtroTexto = '';
+let whatsappUrl = '';
 const marcasSelecionadas = new Set();
 
 const grid          = document.querySelector('#vehicle-grid');
@@ -66,6 +67,17 @@ function aplicarBrandingDaRevenda(org) {
   if (org.nome) {
     document.title = `${org.nome} | Motos selecionadas`;
   }
+  whatsappUrl = criarLinkWhatsApp(org.whatsapp || org.telefone || org.celular || '');
+  document.querySelectorAll('[data-whatsapp-link]').forEach(link => {
+    link.href = whatsappUrl || '#contato';
+  });
+}
+
+function criarLinkWhatsApp(numero, mensagem = '') {
+  const digitos = String(numero).replace(/\D/g, '');
+  if (!digitos) return '';
+  const destino = digitos.startsWith('55') ? digitos : `55${digitos}`;
+  return `https://wa.me/${destino}${mensagem ? `?text=${encodeURIComponent(mensagem)}` : ''}`;
 }
 
 // ─── FILTROS DE MARCA/MODELO ─────────────────
@@ -151,6 +163,7 @@ function cardHTML(c) {
         <div class="price">${money(c.preco)}</div>
         <div class="card-actions">
           <a class="button button-outline" href="detalhes.html?id=${escAttr(c.id)}">Ver detalhes</a>
+          <a class="button whatsapp-card" href="${escAttr(criarLinkWhatsApp(whatsappUrl, `Olá! Tenho interesse na ${c.marca} ${c.modelo}`) || '#contato')}" ${whatsappUrl ? 'target="_blank" rel="noreferrer"' : ''}>WhatsApp</a>
         </div>
       </div>
     </article>`;

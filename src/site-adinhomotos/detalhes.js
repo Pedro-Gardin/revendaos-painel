@@ -17,7 +17,10 @@ async function iniciar() {
   const id = new URLSearchParams(location.search).get('id');
   if (!id) { location.href = 'index.html'; return; }
 
-  const carroSnap = await getDoc(doc(db, 'organizations', ORG_SLUG, 'carros', id));
+  const [carroSnap, orgSnap] = await Promise.all([
+    getDoc(doc(db, 'organizations', ORG_SLUG, 'carros', id)),
+    getDoc(doc(db, 'organizations', ORG_SLUG)),
+  ]);
   if (!carroSnap.exists()) {
     document.querySelector('main').innerHTML = '<p style="padding:40px 20px">Moto não encontrada.</p>';
     return;
@@ -32,6 +35,22 @@ async function iniciar() {
   document.querySelector('#price').textContent = money(c.preco);
   document.querySelector('#description').textContent = c.desc ||
     `${c.marca} ${c.modelo} selecionada pela Adinho Motos, com procedência, revisão e documentação em dia. Consulte nossa equipe para conhecer todos os detalhes.`;
+  const numero = orgSnap.exists() ? (orgSnap.data().whatsapp || orgSnap.data().telefone || orgSnap.data().celular || '') : '';
+  const digitos = String(numero).replace(/\D/g, '');
+  const whatsapp = digitos ? `https://wa.me/${digitos.startsWith('55') ? digitos : `55${digitos}`}?text=${encodeURIComponent(`Olá! Vi o site e tenho interesse na ${c.marca} ${c.modelo} (${c.preco}). Ainda disponível?`)}` : '';
+  let botaoWhatsApp = document.querySelector('#whatsapp');
+  if (!botaoWhatsApp) {
+    botaoWhatsApp = document.createElement('a');
+    botaoWhatsApp.id = 'whatsapp';
+    botaoWhatsApp.className = 'button button-green';
+    botaoWhatsApp.textContent = '◉ Tenho interesse nesta moto';
+    document.querySelector('.price-box').append(botaoWhatsApp);
+  }
+  botaoWhatsApp.href = whatsapp || 'index.html#contato';
+  if (whatsapp) {
+    botaoWhatsApp.target = '_blank';
+    botaoWhatsApp.rel = 'noreferrer';
+  }
   document.querySelector('#specs').innerHTML = [
     ['Marca', c.marca], ['Modelo', c.modelo], ['Ano', c.ano], ['Quilometragem', c.km ? `${c.km} km` : ''],
     ['Câmbio', c.cambio], ['Combustível', c.comb], ['Cor', c.cor], ['Troca', c.troca === 'sim' ? 'Aceita' : c.troca === 'mais' ? 'Aceita com volta' : 'Não aceita'],
