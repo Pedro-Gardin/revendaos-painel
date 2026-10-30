@@ -32,9 +32,6 @@ async function iniciar() {
   document.querySelector('#price').textContent = money(c.preco);
   document.querySelector('#description').textContent = c.desc ||
     `${c.marca} ${c.modelo} selecionada pela Adinho Motos, com procedência, revisão e documentação em dia. Consulte nossa equipe para conhecer todos os detalhes.`;
-  document.querySelector('#whatsapp').href =
-    `https://wa.me/5554991184936?text=${encodeURIComponent(`Olá! Vi o site e tenho interesse na ${c.marca} ${c.modelo} (${c.preco}). Ainda disponível?`)}`;
-
   document.querySelector('#specs').innerHTML = [
     ['Marca', c.marca], ['Modelo', c.modelo], ['Ano', c.ano], ['Quilometragem', c.km ? `${c.km} km` : ''],
     ['Câmbio', c.cambio], ['Combustível', c.comb], ['Cor', c.cor], ['Troca', c.troca === 'sim' ? 'Aceita' : c.troca === 'mais' ? 'Aceita com volta' : 'Não aceita'],

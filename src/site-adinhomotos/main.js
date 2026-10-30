@@ -134,7 +134,6 @@ function render() {
 function cardHTML(c) {
   const foto = c.fotos && c.fotos.length ? escUrl(c.fotos[0]) : '';
   const statusLabel = { disponivel: 'DISPONÍVEL', reservado: 'RESERVADO' }[c.status] || '';
-  const msgWpp = encodeURIComponent(`Olá! Tenho interesse na ${c.marca} ${c.modelo}`);
 
   return `
     <article class="car-card">
@@ -152,7 +151,6 @@ function cardHTML(c) {
         <div class="price">${money(c.preco)}</div>
         <div class="card-actions">
           <a class="button button-outline" href="detalhes.html?id=${escAttr(c.id)}">Ver detalhes</a>
-          <a class="button whatsapp-card" href="https://wa.me/5554991184936?text=${msgWpp}" target="_blank" rel="noreferrer">WhatsApp</a>
         </div>
       </div>
     </article>`;
